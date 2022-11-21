@@ -1,50 +1,71 @@
 import random
-import time
 import os
 from pylsl import StreamInfo, StreamOutlet
 import numpy as np
 import tkinter as tk
 from PIL import Image
-from tkinter import *
-from PIL import Image, ImageTk
-import imageio as iio
+from PIL import ImageTk
 
 
 
-STIM_ONSET = 1
-TIME_BETWEEN_STIMULUS = 1
+STIM_ONSET = 3000 #ms
+TIME_BETWEEN_STIMULUS = 2000 #ms
 TARGET_NUMBER = 2
-NUMBER_OF_BLOCKS = 5
-TRIALS_NUMBER = 10
+NUMBER_OF_BLOCKS = 2
+TRIALS_NUMBER = 1
 TARGET_RATIO = 0.5
 count = 0
 #rootFolder = 'C:\\Users\\marko\\bci\\exercises\\Recordings'
 img_folder = "C:\\Users\\talyma\\bci\\BCI4ALS---Team\\images"
+BLANK = 2
+CIRCLE = 1
+RECT = 0
 
 
-def run_training(window, panel, count):
+def run_training(window, panel, count, trainingImage, training_set, StimOnset, interTime, outlet):
     print (count)
-    if(count > 1):
+    if(count >= training_set.shape[0]):
         window.destroy()
         return 
     panel.pack_forget()
-    if (count == 0): 
-        path = os.path.join(img_folder, 'circles.jpg')
-        message = "Please count circles"
+    if (training_set[count] == CIRCLE): 
+        path = trainingImage[CIRCLE]
+        marker = CIRCLE
+        interval = StimOnset
     else:
-        message = "Please focus on rectangle"
-        path = os.path.join(img_folder, 'rect.jpg')
-    window.title(message)
+        if(training_set[count] == RECT):
+            path = trainingImage[RECT]
+            marker = RECT
+            interval = StimOnset
+        else:
+            path = trainingImage[BLANK]
+            marker = BLANK
+            interval = interTime
+
+    markernames = ['Rect', 'Circle', 'inter']
+    print("send marker", markernames[marker])
+
+    outlet.push_sample([markernames[marker]])
+    
+    #window.title(message)
     #Creates a Tkinter-compatible photo image, which can be used everywhere Tkinter expects an image object.
     img = ImageTk.PhotoImage(Image.open(path))
     #The Label widget is a standard Tkinter widget used to display a text or image on the screen.
     panel = tk.Label(window, image = img)
     panel.pack(side = "bottom", fill = "both", expand = "yes")    
     #The Pack geometry manager packs widgets in rows or columns.
-    window.after(2000, lambda : run_training(window, panel,count+1))
+    window.after(interval, lambda : run_training(window, panel,count+1, trainingImage, training_set, StimOnset, interTime, outlet))
+    
     #Start the GUI
     window.mainloop()      
 
+def create_training_set(blocks_N, trials_N, target_ratio):
+    tr_len = blocks_N*blocks_N
+    training_set = np.zeros(tr_len * 2)
+    circle_indexes = random.sample(range(0, tr_len,2), int(target_ratio*tr_len))
+    training_set[circle_indexes] = CIRCLE
+    training_set[range(1, tr_len *2,2)] = BLANK
+    return training_set
     
 def main():
     
@@ -73,9 +94,9 @@ def main():
     
    # """Images"""
     trainingImage = []
-    trainingImage.append(iio.imread(os.path.join(img_folder, 'circles.jpg')))
-    trainingImage.append(iio.imread(os.path.join(img_folder, 'rect.jpg')))
-    nontarget = iio.imread(os.path.join(img_folder, 'blank.jpg'))
+    trainingImage.append(os.path.join(img_folder, 'rect.jpg'))
+    trainingImage.append(os.path.join(img_folder, 'circles.jpg'))
+    trainingImage.append(os.path.join(img_folder, 'blank.jpg'))
     
    
     "Run training experiment"
@@ -92,7 +113,12 @@ def main():
     Output should be:
     raw EEG with triggers marking the stimuli onset (per type) and the blocks beginnings."""
     #taly: 
-    run_training(window, panel, 0)
+    training_set = create_training_set(blocks_N, trials_N, target_ratio)
+    print(training_set)
+    info = StreamInfo('MyMarkerStream', 'Markers', 1, 0, 'string', 'myuidw43536')
+    # make an outlet
+    outlet = StreamOutlet(info) 
+    run_training(window, panel, 0, trainingImage, training_set, StimOnset, interTime, outlet)
         
     
     "Preprocessing: Bandpass filter."
