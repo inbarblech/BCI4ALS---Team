@@ -1,12 +1,14 @@
 import random
 import time
 import os
-import imageio as iio
 from pylsl import StreamInfo, StreamOutlet
 import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
+import tkinter as tk
 from PIL import Image
+from tkinter import *
+from PIL import Image, ImageTk
+import imageio as iio
+
 
 
 STIM_ONSET = 1
@@ -15,16 +17,50 @@ TARGET_NUMBER = 2
 NUMBER_OF_BLOCKS = 5
 TRIALS_NUMBER = 10
 TARGET_RATIO = 0.5
+count = 0
+#rootFolder = 'C:\\Users\\marko\\bci\\exercises\\Recordings'
+img_folder = "C:\\Users\\talyma\\bci\\BCI4ALS---Team\\images"
 
-rootFolder = 'C:\\Users\\marko\\bci\\exercises\\Recordings'
-img_folder = "C:\\Users\\marko\\bci\\exercises\\img"
 
+def run_training(window, panel, count):
+    print (count)
+    if(count > 1):
+        window.destroy()
+        return 
+    panel.pack_forget()
+    if (count == 0): 
+        path = os.path.join(img_folder, 'circles.jpg')
+        message = "Please count circles"
+    else:
+        message = "Please focus on rectangle"
+        path = os.path.join(img_folder, 'rect.jpg')
+    window.title(message)
+    #Creates a Tkinter-compatible photo image, which can be used everywhere Tkinter expects an image object.
+    img = ImageTk.PhotoImage(Image.open(path))
+    #The Label widget is a standard Tkinter widget used to display a text or image on the screen.
+    panel = tk.Label(window, image = img)
+    panel.pack(side = "bottom", fill = "both", expand = "yes")    
+    #The Pack geometry manager packs widgets in rows or columns.
+    window.after(2000, lambda : run_training(window, panel,count+1))
+    #Start the GUI
+    window.mainloop()      
 
+    
 def main():
     
     
     """GUI
     Recommended to add GUI to control experiment parameters"""
+    #This creates the main window of an application
+    window = tk.Tk()
+    window.geometry("3000x3000")
+    window.configure(background='grey')
+    #Creates a Tkinter-compatible photo image, which can be used everywhere Tkinter expects an image object.
+    img = ImageTk.PhotoImage(Image.open(os.path.join(img_folder, 'blank.jpg')))
+    #The Label widget is a standard Tkinter widget used to display a text or image on the screen.
+    panel = tk.Label(window, image = img)
+    panel.pack(side = "bottom", fill = "both", expand = "yes")    
+
     
     """Experiment parameters"""
     StimOnset = STIM_ONSET
@@ -35,11 +71,11 @@ def main():
     trials_N = TRIALS_NUMBER
     target_ratio = TARGET_RATIO
     
-    """Images"""
+   # """Images"""
     trainingImage = []
-    trainingImage.append(iio.imread(os.path.join(img_folder, 'square.jpg')))
-    trainingImage.append(iio.imread(os.path.join(img_folder, 'arrow_l.jpg')))
-    nontarget = iio.imread(os.path.join(img_folder, 'arrow_r.jpg'))
+    trainingImage.append(iio.imread(os.path.join(img_folder, 'circles.jpg')))
+    trainingImage.append(iio.imread(os.path.join(img_folder, 'rect.jpg')))
+    nontarget = iio.imread(os.path.join(img_folder, 'blank.jpg'))
     
    
     "Run training experiment"
@@ -56,10 +92,9 @@ def main():
     Output should be:
     raw EEG with triggers marking the stimuli onset (per type) and the blocks beginnings."""
     #taly: 
+    run_training(window, panel, 0)
+        
     
-    print('Please count cirles')
-    image = Image.open(trainingImage[0])
-    image.show()    
     "Preprocessing: Bandpass filter."
     
     "Segment & average the data"
