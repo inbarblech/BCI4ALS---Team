@@ -69,6 +69,11 @@ def create_training_set(blocks_N, trials_N, target_ratio):
     
 def main():
     
+    # make an outlet
+    info = StreamInfo('MyMarkerStream', 'Markers', 1, 0, 'string', 'myuidw43536')
+    outlet = StreamOutlet(info) 
+    print("Press enter to start")
+    x = input()
     
     """GUI
     Recommended to add GUI to control experiment parameters"""
@@ -113,14 +118,14 @@ def main():
     Output should be:
     raw EEG with triggers marking the stimuli onset (per type) and the blocks beginnings."""
     #taly: 
+    #create array with entry per test: circle, rectangle or blank
     training_set = create_training_set(blocks_N, trials_N, target_ratio)
     print(training_set)
-    info = StreamInfo('MyMarkerStream', 'Markers', 1, 0, 'string', 'myuidw43536')
-    # make an outlet
-    outlet = StreamOutlet(info) 
-    run_training(window, panel, 0, trainingImage, training_set, StimOnset, interTime, outlet)
-        
+
+    #show the relevant trigger and send the relevant marker for each entry in training_set
     
+    run_training(window, panel, 0, trainingImage, training_set, StimOnset, interTime, outlet)
+            
     "Preprocessing: Bandpass filter."
     
     "Segment & average the data"
