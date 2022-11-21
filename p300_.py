@@ -4,8 +4,6 @@ import random
 import time
 import os
 import imageio as iio
-
-
 from pylsl import StreamInfo, StreamOutlet
 
 
