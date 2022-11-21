@@ -72,7 +72,7 @@ def main():
     # make an outlet
     info = StreamInfo('MyMarkerStream', 'Markers', 1, 0, 'string', 'myuidw43536')
     outlet = StreamOutlet(info) 
-    print("Press enter to start")
+    print("Press enter to start") 
     x = input()
     
     """GUI
