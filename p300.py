@@ -13,12 +13,13 @@ STIM_ONSET = 3000 #ms
 TIME_BETWEEN_STIMULUS = 2000 #ms
 TARGET_NUMBER = 2
 NUMBER_OF_BLOCKS = 2
-TRIALS_NUMBER = 1
-TARGET_RATIO = 0.5
+TRIALS_NUMBER = 2
+TARGET_RATIO     = 0.5
 count = 0
 #rootFolder = 'C:\\Users\\marko\\bci\\exercises\\Recordings'
 #img_folder = "C:\\Users\\talyma\\bci\\BCI4ALS---Team\\images"
 img_folder = "C:\\Users\\marko\\bci\\exercises\\BCI4ALS---Team\\images"
+recording_folder = 'C:\\Users\\marko\\bci\\exercises\\Recordings\\EGI.xdf'
 BLANK = 2
 CIRCLE = 1
 RECT = 0
@@ -62,7 +63,7 @@ def run_training(window, panel, count, trainingImage, training_set, StimOnset, i
     window.mainloop()      
 
 def create_training_set(blocks_N, trials_N, target_ratio):
-    tr_len = blocks_N*blocks_N
+    tr_len = blocks_N*trials_N
     training_set = np.zeros(tr_len * 2)
     circle_indexes = random.sample(range(0, tr_len,2), int(target_ratio*tr_len))
     training_set[circle_indexes] = CIRCLE
@@ -124,13 +125,12 @@ def main():
     training_set = create_training_set(blocks_N, trials_N, target_ratio)
     print(training_set)
 
-    #show the relevant trigger and send the relevant marker for each entry in training_set
-    
+    #show the relevant trigger and send the relevant marker for each entry in training_set    
     run_training(window, panel, 0, trainingImage, training_set, StimOnset, interTime, outlet)
     
     print("Training done")
     x = input()
-    data, header = pyxdf.load_xdf('C:\\Users\\marko\\bci\\exercises\\Recordings\\EGI.xdf')
+    data, header = pyxdf.load_xdf(recording_folder)
     print(data)
             
     "Preprocessing: Bandpass filter."
