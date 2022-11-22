@@ -65,9 +65,9 @@ def run_training(window, panel, count, trainingImage, training_set, StimOnset, i
 def create_training_set(blocks_N, trials_N, target_ratio):
     tr_len = blocks_N*trials_N
     training_set = np.zeros(tr_len * 2)
-    circle_indexes = random.sample(range(0, tr_len,2), int(target_ratio*tr_len))
+    circle_indexes = random.sample(range(0, tr_len*2, 2), int(target_ratio*tr_len))
     training_set[circle_indexes] = CIRCLE
-    training_set[range(1, tr_len *2,2)] = BLANK
+    training_set[range(1, tr_len *2, 2)] = BLANK
     return training_set
     
 def main():
