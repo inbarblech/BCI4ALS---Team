@@ -5,6 +5,7 @@ import numpy as np
 import tkinter as tk
 from PIL import Image
 from PIL import ImageTk
+import pyxdf
 
 
 
@@ -16,7 +17,8 @@ TRIALS_NUMBER = 1
 TARGET_RATIO = 0.5
 count = 0
 #rootFolder = 'C:\\Users\\marko\\bci\\exercises\\Recordings'
-img_folder = "C:\\Users\\talyma\\bci\\BCI4ALS---Team\\images"
+#img_folder = "C:\\Users\\talyma\\bci\\BCI4ALS---Team\\images"
+img_folder = "C:\\Users\\marko\\bci\\exercises\\BCI4ALS---Team\\images"
 BLANK = 2
 CIRCLE = 1
 RECT = 0
@@ -125,6 +127,11 @@ def main():
     #show the relevant trigger and send the relevant marker for each entry in training_set
     
     run_training(window, panel, 0, trainingImage, training_set, StimOnset, interTime, outlet)
+    
+    print("Training done")
+    x = input()
+    data, header = pyxdf.load_xdf('C:\\Users\\marko\\bci\\exercises\\Recordings\\EGI.xdf')
+    print(data)
             
     "Preprocessing: Bandpass filter."
     
