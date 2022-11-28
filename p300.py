@@ -18,8 +18,10 @@ TARGET_RATIO     = 0.5
 count = 0
 #rootFolder = 'C:\\Users\\marko\\bci\\exercises\\Recordings'
 #img_folder = "C:\\Users\\talyma\\bci\\BCI4ALS---Team\\images"
-img_folder = "C:\\Users\\marko\\bci\\exercises\\BCI4ALS---Team\\images"
-recording_folder = 'C:\\Users\\marko\\bci\\exercises\\Recordings\\EGI.xdf'
+# img_folder = "C:\\Users\\marko\\bci\\exercises\\BCI4ALS---Team\\images"
+# recording_folder = 'C:\\Users\\marko\\bci\\exercises\\Recordings\\EGI.xdf'
+img_folder = os.join(os.getcwd(), "images")
+recording_folder = os.join(os.getcwd(), "Recordings\\EGI.xdf")
 BLANK = 2
 CIRCLE = 1
 RECT = 0
@@ -137,6 +139,7 @@ def main():
     
     "Segment & average the data"
     """Choose desired ERP segment(i.e. - 200 ms: 500 ms)
+
     Cut each stimuli type per block according to segment limit
     Subtract baseline(subtract mean amplitude of pre stimuli from the entire trial)
     Average the trials(create ERP per class per block)
