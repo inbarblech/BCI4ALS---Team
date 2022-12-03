@@ -2,12 +2,13 @@ import os
 import numpy as np
 import pyxdf
 import matplotlib.pyplot as plt
+from filter_ import filter_sig as flt
 
 
 PRIO_MARKER = 0.200
 POST_MARKER = 0.500
 
-def get_P300_segment(recording_folder = os.path.join(os.getcwd(), "Recordings\\EGI_synt.xdf"), target = 'Target'):
+def get_P300_segment(recording_folder = os.path.join(os.getcwd(), "Recordings\\EGI.xdf"), target = 'Target'):
     data, header = pyxdf.load_xdf(recording_folder)
     
     #get data from markers streem
@@ -18,15 +19,16 @@ def get_P300_segment(recording_folder = os.path.join(os.getcwd(), "Recordings\\E
     #get data from GUI streem
     line_= data[1] 
     channels_data = np.array(line_["time_series"])
+    channels_data = flt(channels_data,btype ='lp', freq = 50)
     time_stamps_data = np.array(line_["time_stamps"])
-    
+     
     #cut the relevant signal accroding to the markers
     start_marker_search_index = 0
     signal_segment_list = [] 
     
     for i in range(markers_list.shape[0]):
-        if(markers_list[i] == target): 
-        #if(markers_list[i] == 'Circle'):#currently EGI.xdf has "Circle". Replace with Target once recored
+        #if(markers_list[i] == target): 
+        if(markers_list[i] == 'Circle'):#currently EGI.xdf has "Circle". Replace with Target once recored
             start_index = -1
             stop_index = -1
             for index in range(start_marker_search_index, time_stamps_data.shape[0]):
@@ -61,7 +63,7 @@ if __name__ == '__main__':
         av = sum(signal_segment)/len(signal_segment)
         signal_segment = signal_segment-av
         plt.plot(x_range, np.array(signal_segment))
-        plt.ylim([-100, 100])
-        print(signal_segment)
+        plt.ylim(signal_segment.min(), signal_segment.max())
+        #print(signal_segment)
         plt.show()
         
