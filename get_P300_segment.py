@@ -19,7 +19,8 @@ def get_P300_segment(recording_folder = os.path.join(os.getcwd(), "Recordings\\E
     #get data from GUI streem
     line_= data[1] 
     channels_data = np.array(line_["time_series"])
-    channels_data = flt(channels_data,btype ='lp', freq = 50)
+    channels_data = flt(channels_data,btype ='lp', freq = 40)
+    channels_data = flt(channels_data,btype ='hp', freq = 0.5)
     time_stamps_data = np.array(line_["time_stamps"])
      
     #cut the relevant signal accroding to the markers
