@@ -28,81 +28,15 @@ PLOTS_FOLDER = os.path.join(DATA_FOLDER, "plots")
 FSFEL_PLOTS_FOLDER = os.path.join(PLOTS_FOLDER, "FSFEL")
 TSFRESH_PLOTS_FOLDER = os.path.join(PLOTS_FOLDER, "TSFRESH")
 
+TRAIN_DATA_FOLDER = os.path.join(os.getcwd(), "training_data")
+TRAIN_DATA_FOLDER_FSFEL = os.path.join(TRAIN_DATA_FOLDER, "FSFEL")
+TRAIN_DATA_FOLDER_TSFRESH = os.path.join(TRAIN_DATA_FOLDER, "TSFRESH")
+
 FILE_NAME = "EEG_05_12_2_0.csv"
 DATA_FILE = os.path.join(TARGET_DATA_FOLDER, FILE_NAME)
 FEATURES_FILE = os.path.join(TARGET_FEATUERS_FOLDER, FILE_NAME)
 TSFEL_FEATURES_FOLDER = os.path.join(DATA_FOLDER, "plots\\FSFEL")
 
-def plot_features(x_range, y_t, y_o, title, color_t, color_o, folder, x_lable):
-        plt.plot(x_range, y_t)
-        plt.plot(x_range, y_o, color = color_o, alpha=0.4)
-        try:
-            plt.ylim(min(y_t.min(),y_o.min()) , max(y_t.max(),y_o.max()))
-        except:
-            print("limit except", title)
-            return 
-        if(title.find('.')!=-1)            :
-            title = title.replace(".", "_")           
-
-        plt.title(title)
-        plt.xlabel(x_lable) 
-        plt.legend()
-        try:
-            plt.savefig(os.path.join(folder, title))
-        except:
-            print("failed to plot", title)            
-        plt.show()
-        
-def TSFEL_features(data_file, features_file):
-    segment = pd.read_csv(data_file)
-    cfg_file = tsfel.get_features_by_domain()# If no argument is passed retrieves all available features
-    X_train = tsfel.time_series_features_extractor(cfg_file, segment, window_size=20,  window_spliter=True)
-    X_train.to_csv(features_file)
-    return X_train    
-
-def TSFRESH_features(data_file, features_file):
-    print("TSFRESH_features")
-    segment = pd.read_csv(data_file)
-    segment.insert(0, 'id', '1')
-
-    extracted_features = extract_features(segment, column_id="id", column_sort="ts")
-    extracted_features = impute(extracted_features)
-    df_filt = extracted_features.columns[(extracted_features == 0).all()]
-    extracted_features = extracted_features.drop(df_filt, axis=1)
-    extracted_features.to_csv(features_file)
-    print("TSFRESH_features done")
-
-    return extracted_features
-
-def extract_all_features():
-    TSFEL_other_feat_list = []
-    TSFEL_target_feat_list = []
-    TSFRESH_other_feat_list = []
-    TSFRESH_target_feat_list = []
-    
-    target_list = glob.glob(os.path.join(TARGET_DATA_FOLDER,"*.csv"))
-    for target_data in target_list:
-        TSFEL_feat = TSFEL_features(target_data, target_data.replace("\\data\\", "\\features\\FSFEL\\"))
-        TSFEL_target_feat_list.append(TSFEL_feat)
-        
-        TSFRESH_feat = TSFRESH_features(target_data, target_data.replace("\\data\\", "\\features\\TSFRESH\\"))
-        TSFRESH_feat_all_chann = combine_channels_data(TSFRESH_feat)
-        TSFRESH_target_feat_list.append(TSFRESH_feat_all_chann)
-    other_list = glob.glob(os.path.join(OTHER_DATA_FOLDER,"*.csv"))
-    for other_data in other_list:
-        TSFEL_feat = TSFEL_features(other_data, other_data.replace("\\data\\", "\\features\\FSFEL\\"))
-        TSFEL_other_feat_list.append(TSFEL_feat)
-
-        TSFRESH_feat = TSFRESH_features(other_data, other_data.replace("\\data\\", "\\features\\TSFRESH\\"))
-        TSFRESH_feat_all_chann = combine_channels_data(TSFRESH_feat)
-        TSFRESH_other_feat_list.append(TSFRESH_feat_all_chann)
-        
-    TSFRESH_x = [0,1,2,3,4,5,6,7,8]
-    print(TSFRESH_other_feat_list)
-    vesualize_features(TSFRESH_target_feat_list,TSFRESH_other_feat_list, TSFRESH_x, TSFRESH_PLOTS_FOLDER, 'channel #')
-    
-    TSFEL_x = [1,2,3,4]
-    vesualize_features(TSFEL_target_feat_list,TSFEL_other_feat_list, TSFEL_x, FSFEL_PLOTS_FOLDER, "window #")
 
 def combine_channels_data(split_channels_features):
     print("combine_channels_data")
@@ -161,6 +95,75 @@ def vesualize_features(target_feat_list, other_feat_list, x, graphs_folder, x_la
                     
                     if(y_t[0][0] != y_t[1][0] or y_t[1][0]!=y_t[2][0]):
                         plot_features(x, y_t, y_o, feature, 'g', 'grey', graphs_folder, x_lable)
+
+def plot_features(x_range, y_t, y_o, title, color_t, color_o, folder, x_lable):
+        plt.plot(x_range, y_t)
+        plt.plot(x_range, y_o, color = color_o, alpha=0.4)
+        try:
+            plt.ylim(min(y_t.min(),y_o.min()) , max(y_t.max(),y_o.max()))
+        except:
+            print("limit except", title)
+            return 
+        if(title.find('.')!=-1)            :
+            title = title.replace(".", "_")           
+
+        plt.title(title)
+        plt.xlabel(x_lable) 
+        plt.legend()
+        try:
+            plt.savefig(os.path.join(folder, title))
+        except:
+            print("failed to plot", title)            
+        plt.show()
+        
+def TSFEL_features(data_file, features_file):
+    segment = pd.read_csv(data_file)
+    cfg_file = tsfel.get_features_by_domain()# If no argument is passed retrieves all available features
+    X_train = tsfel.time_series_features_extractor(cfg_file, segment, window_size=20,  window_spliter=True)
+    X_train.to_csv(features_file)
+    return X_train    
+
+def TSFRESH_features(data_file, features_file):
+    print("TSFRESH_features")
+    segment = pd.read_csv(data_file)
+    segment.insert(0, 'id', '1')
+    extracted_features = extract_features(segment, column_id="id", column_sort="ts")
+    extracted_features = impute(extracted_features)
+    df_filt = extracted_features.columns[(extracted_features == 0).all()]
+    extracted_features = extracted_features.drop(df_filt, axis=1)
+    extracted_features.to_csv(features_file)
+    return extracted_features
+
+def extract_all_features():
+    TSFEL_other_feat_list = []
+    TSFEL_target_feat_list = []
+    TSFRESH_other_feat_list = []
+    TSFRESH_target_feat_list = []
+    
+    target_list = glob.glob(os.path.join(TARGET_DATA_FOLDER,"*.csv"))
+    for target_data in target_list:
+        TSFEL_feat = TSFEL_features(target_data, target_data.replace("\\data\\", "\\features\\FSFEL\\"))
+        TSFEL_target_feat_list.append(TSFEL_feat)
+        
+        TSFRESH_feat = TSFRESH_features(target_data, target_data.replace("\\data\\", "\\features\\TSFRESH\\"))
+        TSFRESH_feat_all_chann = combine_channels_data(TSFRESH_feat)
+        TSFRESH_target_feat_list.append(TSFRESH_feat_all_chann)
+    
+    other_list = glob.glob(os.path.join(OTHER_DATA_FOLDER,"*.csv"))
+    for other_data in other_list:
+        TSFEL_feat = TSFEL_features(other_data, other_data.replace("\\data\\", "\\features\\FSFEL\\"))
+        TSFEL_other_feat_list.append(TSFEL_feat)
+
+        TSFRESH_feat = TSFRESH_features(other_data, other_data.replace("\\data\\", "\\features\\TSFRESH\\"))
+        TSFRESH_feat_all_chann = combine_channels_data(TSFRESH_feat)
+        TSFRESH_other_feat_list.append(TSFRESH_feat_all_chann)
+        
+    TSFRESH_x = [0,1,2,3,4,5,6,7,8]
+    vesualize_features(TSFRESH_target_feat_list,TSFRESH_other_feat_list, TSFRESH_x, TSFRESH_PLOTS_FOLDER, 'channel #')
+    
+    TSFEL_x = [1,2,3,4]
+    vesualize_features(TSFEL_target_feat_list,TSFEL_other_feat_list, TSFEL_x, FSFEL_PLOTS_FOLDER, "window #")
+
 
 if __name__ == '__main__':
     extract_all_features()

@@ -9,7 +9,7 @@ import csv
 
 PRIO_MARKER = 0.200
 POST_MARKER = 0.500
-RECORDED_FILE = "EEG_05_12_2.xdf"
+RECORDED_FILE = "EEG_12_12.xdf"
 #RECORDED_FILE = "EEG_5_12_1.xdf"
 CURRENT_FOLDER = os.getcwd()
 RECORDING_FOLDER = os.path.join(CURRENT_FOLDER, "Recordings")

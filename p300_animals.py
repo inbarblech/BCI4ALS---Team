@@ -12,8 +12,8 @@ import pyxdf
 STIM_ONSET = 3000 #ms
 TIME_BETWEEN_STIMULUS = 2000 #ms
 TARGET_NUMBER = 2
-NUMBER_OF_BLOCKS = 5
-TRIALS_NUMBER = 5
+NUMBER_OF_BLOCKS = 6
+TRIALS_NUMBER = 6
 TARGET_RATIO     = 0.2
 count = 0
 #rootFolder = 'C:\\Users\\marko\\bci\\exercises\\Recordings'
