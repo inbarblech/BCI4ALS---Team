@@ -5,6 +5,7 @@ import numpy as np
 import tkinter as tk
 from PIL import Image
 from PIL import ImageTk
+from pathlib import Path
 import pyxdf
 
 
@@ -27,24 +28,24 @@ TARGET = 1
 OTHER = 0
 
 
-def run_training(window, panel, count, trainingImage, training_set, StimOnset, interTime, outlet):
-    print (count)
-    if(count >= training_set.shape[0]): #end of training
+def run_block(window, panel, block_num, trail_num, trainingImage, training_set, StimOnset, interTime, outlet, animal_index):
+    print(trail_num)
+    if trail_num >= TRIALS_NUMBER*2: #end of training
         window.destroy()
         return 
     panel.pack_forget()
-    if (training_set[count] == TARGET): 
-        path = trainingImage[0] #cat is first in array
+    if training_set[block_num*TRIALS_NUMBER + trail_num] == TARGET:
+        path = trainingImage[animal_index]
         marker = 0
         interval = StimOnset
     else:
-        if(training_set[count] == OTHER):
-            index = random.randint(2, len(trainingImage)-1)
+        if training_set[block_num*TRIALS_NUMBER + trail_num] == OTHER:
+            index = random.choice([i for i in range(1, len(trainingImage)) if i!=animal_index])
             path = trainingImage[index]
             marker = 1
             interval = StimOnset
         else:
-            path = trainingImage[1]
+            path = trainingImage[0]
             marker = 2
             interval = interTime
 
@@ -57,19 +58,40 @@ def run_training(window, panel, count, trainingImage, training_set, StimOnset, i
     #Creates a Tkinter-compatible photo image, which can be used everywhere Tkinter expects an image object.
     img = ImageTk.PhotoImage(Image.open(path))
     #The Label widget is a standard Tkinter widget used to display a text or image on the screen.
-    panel = tk.Label(window, image = img)
-    panel.pack(side = "bottom", fill = "both", expand = "yes")    
+    panel = tk.Label(window, image=img)
+    panel.pack(side="bottom", fill="both", expand="yes")
     #The Pack geometry manager packs widgets in rows or columns.
-    window.after(interval, lambda : run_training(window, panel,count+1, trainingImage, training_set, StimOnset, interTime, outlet))
+    window.after(interval, lambda: run_block(window, panel,block_num, trail_num+1, trainingImage, training_set, StimOnset, interTime, outlet, animal_index))
     
     #Start the GUI
-    window.mainloop()      
+    window.mainloop()
+
+
+def run_training(trainingImage, training_set, StimOnset, interTime, outlet):
+    for block_idx in range(NUMBER_OF_BLOCKS):
+        """GUI
+        Recommended to add GUI to control experiment parameters"""
+        # This creates the main window of an application
+        window = tk.Tk()
+        window.geometry("3000x3000")
+        window.configure(background='grey')
+        # Creates a Tkinter-compatible photo image, which can be used everywhere Tkinter expects an image object.
+        img = ImageTk.PhotoImage(Image.open(os.path.join(img_folder, 'blank.jpg')))
+        # The Label widget is a standard Tkinter widget used to display a text or image on the screen.
+        panel = tk.Label(window, image=img)
+        panel.pack(side="bottom", fill="both", expand="yes")
+        animal_index = random.choice([i for i in range(1, len(trainingImage))])
+        print(f"Look for {Path(trainingImage[animal_index]).stem}")
+        run_block(window, panel, block_idx, 0, trainingImage, training_set, StimOnset, interTime, outlet, animal_index)
+
 
 def create_training_set(blocks_N, trials_N, target_ratio):
     tr_len = blocks_N*trials_N
     training_set = np.zeros(tr_len*2)
-    target_indexes = random.sample(range(0, tr_len*2, 2), int(target_ratio*tr_len))
-    training_set[target_indexes] = TARGET
+    for block in range(blocks_N):
+        target_indexes = random.sample(range(0, trials_N*2, 2), int(target_ratio*trials_N))
+        target_indexes = [index + (block*trials_N*2) for index in target_indexes]
+        training_set[target_indexes] = TARGET
     training_set[range(1, tr_len *2, 2)] = BLANK
     return training_set
     
@@ -80,19 +102,6 @@ def main():
     outlet = StreamOutlet(info) 
     print("Press enter to start") 
     x = input()
-    
-    """GUI
-    Recommended to add GUI to control experiment parameters"""
-    #This creates the main window of an application
-    window = tk.Tk()
-    window.geometry("3000x3000")
-    window.configure(background='grey')
-    #Creates a Tkinter-compatible photo image, which can be used everywhere Tkinter expects an image object.
-    img = ImageTk.PhotoImage(Image.open(os.path.join(img_folder, 'blank.jpg')))
-    #The Label widget is a standard Tkinter widget used to display a text or image on the screen.
-    panel = tk.Label(window, image = img)
-    panel.pack(side = "bottom", fill = "both", expand = "yes")    
-
     
     """Experiment parameters"""
     StimOnset = STIM_ONSET
@@ -105,8 +114,8 @@ def main():
     
    # """Images"""
     trainingImage = []
-    trainingImage.append(os.path.join(img_folder, 'cat.jpeg')) #index 0
-    trainingImage.append(os.path.join(img_folder, 'blank.jpg')) # index 1
+    trainingImage.append(os.path.join(img_folder, 'blank.jpg'))
+    trainingImage.append(os.path.join(img_folder, 'cat.jpeg'))
     trainingImage.append(os.path.join(img_folder, 'zebra.jpeg'))    
     trainingImage.append(os.path.join(img_folder, 'dog.jpeg'))
     trainingImage.append(os.path.join(img_folder, 'bird.jpeg'))
@@ -132,7 +141,7 @@ def main():
     print(training_set)
 
     #show the relevant trigger and send the relevant marker for each entry in training_set    
-    run_training(window, panel, 0, trainingImage, training_set, StimOnset, interTime, outlet)
+    run_training(trainingImage, training_set, StimOnset, interTime, outlet)
     
     print("Training done")
     x = input()
