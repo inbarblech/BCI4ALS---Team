@@ -14,9 +14,9 @@ from sklearn import preprocessing as pr
 
 
 #RECORDED_FILE = "EEG_5_12_1.xdf"
-RECORDED_FILE = "EEG_05_12_2.xdf"
+#RECORDED_FILE = "EEG_05_12_2.xdf"
 #RECORDED_FILE = "EEG_12_12.xdf"
-#RECORDED_FILE = "EEG_12_12_1.xdf"
+RECORDED_FILE = "EEG_12_12_1.xdf"
 #RECORDED_FILE = "eeg_26_12_2.xdf"
 #RECORDED_FILE = "eeg_26_12_1.xdf"
 #RECORDED_FILE = "eeg_26_12.xdf"
@@ -170,7 +170,7 @@ def read_data_cut_segments(recorded_file = RECORDED_FILE, cut_start=0,  cut_stop
 #markernames = ['Target', 'Other', 'inter']
 if __name__ == '__main__':
 
-    read_data_cut_segments(RECORDING_FILE, cut_start=0,  cut_stop=0)
+    read_data_cut_segments(RECORDING_FILE, cut_start=500,  cut_stop=500)
 
 
     
