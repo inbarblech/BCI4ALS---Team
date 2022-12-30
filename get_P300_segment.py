@@ -3,53 +3,55 @@ import numpy as np
 import pyxdf
 import matplotlib.pyplot as plt
 from filter_ import filter_sig as flt
+from filter_ import cut_edges 
 import csv
+import pandas as pd
+from visualizer import plot_data
+from visualizer import plot_segments
+from visualizer import plot_segments_all
+from sklearn import preprocessing as pr
 
 
+
+#RECORDED_FILE = "EEG_5_12_1.xdf"
+RECORDED_FILE = "EEG_05_12_2.xdf"
+#RECORDED_FILE = "EEG_12_12.xdf"
+#RECORDED_FILE = "EEG_12_12_1.xdf"
+#RECORDED_FILE = "eeg_26_12_2.xdf"
+#RECORDED_FILE = "eeg_26_12_1.xdf"
+#RECORDED_FILE = "eeg_26_12.xdf"
 
 PRIO_MARKER = 0.200
 POST_MARKER = 0.500
-RECORDED_FILE = "EEG_12_12.xdf"
-#RECORDED_FILE = "EEG_5_12_1.xdf"
+
 CURRENT_FOLDER = os.getcwd()
 RECORDING_FOLDER = os.path.join(CURRENT_FOLDER, "Recordings")
 RECORDING_FILE = os.path.join(RECORDING_FOLDER, RECORDED_FILE)
 DATA_FOLDER = os.path.join(CURRENT_FOLDER, "segmented_data")
 OTHER_DATA_FOLDER = os.path.join(DATA_FOLDER, "other\\data")
 TARGET_DATA_FOLDER = os.path.join(DATA_FOLDER, "target\\data")
+N_SEG_PER_CH = os.path.join(DATA_FOLDER, "n_seg_per_ch")
 
-def get_signal(recording_file = RECORDING_FILE):
-    data, header = pyxdf.load_xdf(recording_file)    
-    #get data from markers streem
-    line_= data[0] 
-    markers_list = np.array(line_["time_series"])
-    markers_time_stamps = np.array(line_["time_stamps"])
+def get_signal(recording_file):    
+    data, header = pyxdf.load_xdf(recording_file)  
+    line_0= data[0] 
+    line_1= data[1]
+    if((isinstance(line_0["time_series"],list))!=True): #data/GUI streem is first 
+        line_0, line_1 = line_1, line_0
+    
+    #get markers
+    markers_list = np.array(line_0["time_series"])
+    markers_time_stamps = np.array(line_0["time_stamps"])
     
     #get data from GUI streem
-    line_= data[1] 
-    channels_data = np.array(line_["time_series"])
-    channels_data = flt(channels_data) ##filter channel data
-    time_stamps_data = np.array(line_["time_stamps"])
+    channels_data = np.array(line_1["time_series"])
+    time_stamps_data = np.array(line_1["time_stamps"])
+       
     return markers_list, markers_time_stamps, channels_data, time_stamps_data
         
 
-
-def plot_full_signal(start = 2500, stop = 5000):
-    markers_list, markers_time_stamps, channels_data, time_stamps_data = get_signal()
-    print(type(channels_data))
-    x_range = np.arange(start, stop,1) 
-    av = sum(channels_data)/len(channels_data)
-    signal = channels_data[start:stop]-av
-    plt.plot(x_range, np.array(signal), linewidth=0.5)
-    plt.ylim(signal.min(), signal.max())
-    plt.show()
-    plt.show()
-    
-
-def get_P300_segment(recording_file = RECORDING_FILE, target = 'Target'):
-    
-    markers_list, markers_time_stamps, channels_data, time_stamps_data = get_signal(recording_file = recording_file)
-     
+def get_P300_segment(markers_list, markers_time_stamps, channels_data, time_stamps_data, target = 'Target'):
+        
     #cut the relevant signal accroding to the markers
     end_of_data_s = time_stamps_data.shape[0]    
     start_marker_search_index = 0
@@ -97,23 +99,6 @@ def get_P300_segment(recording_file = RECORDING_FILE, target = 'Target'):
                    
     return  signal_segment_list, time_segment_list, markers_placement_list
 
-def plot_segments(signal_segment_list, time_segment_list, markers_placement_list, target):
-    for i in range(len(signal_segment_list)):        
-        signal_segment = signal_segment_list[i][:,0:8]
-        signal_time = time_segment_list[i]
-        x_range=(signal_time - markers_placement_list[i])*1000
-        av = sum(signal_segment)/len(signal_segment)
-        signal_segment = signal_segment-av
-        plt.plot(x_range, np.array(signal_segment))
-        marker_x = [0]
-        marker_y = [0]
-        plt.plot(marker_x,marker_y, 'go',label='marker', markersize=10, markeredgecolor="red", markerfacecolor="green")
-        plt.ylim(signal_segment.min(), signal_segment.max())
-        plt.title(target)
-        plt.xlabel('msec') 
-        plt.legend()
-        plt.show()
-
 def save_data(signal_segment_list, time_segment_list, markers_placement_list, target):
     #save segments to file for the future use
     i = 0
@@ -131,25 +116,64 @@ def save_data(signal_segment_list, time_segment_list, markers_placement_list, ta
             header = np.arange(0, signal_segment.shape[1])
             header = np.hstack((["ts"], header))
             writer.writerow(header)
-            print(signal_segment.shape)
             for line, ts in zip(signal_segment, time_segment):
                 writer.writerow(np.hstack(([ts], line)))
     
-#markernames = ['Target', 'Other', 'inter']
-if __name__ == '__main__':
-    #read, filter, and segement target data 
-    signal_segment_list_target, time_segment_list_target, markers_placement_list_target = get_P300_segment(target='Target')
-    #read, filter, and segement other  data 
-    signal_segment_list_other, time_segment_list_other, markers_placement_list_other = get_P300_segment(target='Other')
+def read_data_cut_segments(recorded_file = RECORDED_FILE, cut_start=0,  cut_stop=0):
+    #Read *.xdf file 
+    recored_file_name = recorded_file.split('\\')[len(recorded_file.split('\\'))-1].split('.')[0]
+                                            
+    markers_list, markers_time_stamps, channels_data, time_stamps_data = get_signal(recorded_file)
+    num_of_channels = 10
+    channels_data = channels_data[:,0:num_of_channels]
+    #cut edges to dismiss "edge artifacts"
+    channels_data, time_stamps_data, markers_time_stamps, markers_list = cut_edges(channels_data, time_stamps_data, markers_time_stamps, markers_list, cut_start = cut_start, cut_stop= cut_stop)
+    # Visualize time series and frequencies 
+    plot_data(markers_list, markers_time_stamps, channels_data, time_stamps_data, recored_file_name, center = False)        
     
-    #save target segements
+    #Filter 
+    chs = []
+    for i in range(0, num_of_channels):  
+        ##filter channel data 
+        sig = flt(channels_data[:,i])
+        chs.append(sig)    
+    chs = np.array(chs).transpose()
+    # Visualize time series and frequencies after filtering        
+    plot_data(markers_list, markers_time_stamps, chs, time_stamps_data, recored_file_name + " filtered", center = False)    
+
+    #Normalize 
+    chs = pr.normalize(chs, axis = 0)
+    #visulaze time series and frequencies after normalization
+    plot_data(markers_list, markers_time_stamps, chs, time_stamps_data, recored_file_name + " Normalized", center = False)    
+    #read, filter, and segement target data 
+
+    #Cut target segments
+    signal_segment_list_target, time_segment_list_target, markers_placement_list_target = get_P300_segment(markers_list, markers_time_stamps, chs, time_stamps_data, target='Target')
+    #Cut other segments
+    signal_segment_list_other, time_segment_list_other, markers_placement_list_other = get_P300_segment(markers_list, markers_time_stamps, chs, time_stamps_data, target='Other')
+    
+    #plot target
+    plot_segments(signal_segment_list_target, time_segment_list_target, markers_placement_list_target, 'Target', num_of_channels)
+    #plot other 
+    plot_segments(signal_segment_list_other, time_segment_list_other, markers_placement_list_other, 'Other', num_of_channels)
+
+    #plot average Target and Average data on 
+    plot_segments_all(signal_segment_list_target, signal_segment_list_other, time_segment_list_target[0], markers_placement_list_target[0])
+
+    #save target segements data 
     save_data(signal_segment_list_target, time_segment_list_target, markers_placement_list_target, 'Target')
     #save other segements
     save_data(signal_segment_list_other, time_segment_list_other, markers_placement_list_other, 'Other')
     
-    #plot target
-    plot_segments(signal_segment_list_target, time_segment_list_target, markers_placement_list_target, 'Target')
-    #plot other 
-    plot_segments(signal_segment_list_other, time_segment_list_other, markers_placement_list_other, 'Other')
 
-        
+    
+#markernames = ['Target', 'Other', 'inter']
+if __name__ == '__main__':
+
+    read_data_cut_segments(RECORDING_FILE, cut_start=0,  cut_stop=0)
+
+
+    
+
+      
+    
