@@ -7,11 +7,11 @@ import matplotlib as plt
 
 
 def classifier_knn(X, y, plot):
-    knn_model = KNeighborsClassifier(n_neighbors=3)  # choose number of neighbors
+    knn_model = KNeighborsClassifier(n_neighbors=2)  # choose number of neighbors
     X_train, X_test, y_train, y_test = skl.model_selection.train_test_split(X,
                                                                             y,
                                                                             random_state=0,
-                                                                            test_size=0.2)
+                                                                            test_size=0.21)
 
     _ = knn_model.fit(X_train, np.ravel(y_train))
     y_predicted = knn_model.predict(X_test)
@@ -40,7 +40,7 @@ def classifier_svm(X, y, plot):
     X_train, X_test, y_train, y_test = skl.model_selection.train_test_split(X,
                                                                             y,
                                                                             random_state=0,
-                                                                            test_size=0.2)
+                                                                            test_size=0.25)
 
     svm_model = svm.SVC()
     _ = svm_model.fit(X_train, np.ravel(y_train))
