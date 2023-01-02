@@ -120,20 +120,19 @@ def save_data(signal_segment_list, time_segment_list, markers_placement_list, ta
             for line, ts in zip(signal_segment, time_segment):
                 writer.writerow(np.hstack(([ts], line)))
     
-def read_data(recorded_file = RECORDED_FILE, cut_start=0,  cut_stop=0, zoomin = True):
+def read_data(recorded_file = RECORDED_FILE, jupyter_b = False):
     #Read *.xdf file 
     recored_file_name = recorded_file.split('\\')[len(recorded_file.split('\\'))-1].split('.')[0]
                                             
     markers_list, markers_time_stamps, channels_data, time_stamps_data = get_signal(recorded_file)
     num_of_channels = 10
     channels_data = channels_data[:,0:num_of_channels]
-    #cut edges to dismiss "edge artifacts"
-    channels_data, time_stamps_data, markers_time_stamps, markers_list = cut_edges(channels_data, time_stamps_data, markers_time_stamps, markers_list, cut_start = cut_start, cut_stop= cut_stop)
+
     # Visualize time series and frequencies 
-    plot_data(markers_list, markers_time_stamps, channels_data, time_stamps_data, recored_file_name, center = False, )        
+    plot_data(markers_list, markers_time_stamps, channels_data, time_stamps_data, recored_file_name, center = False, jupyter_b = jupyter_b)        
     return markers_list, markers_time_stamps, channels_data, time_stamps_data, recored_file_name, num_of_channels 
 
-def filter_normalize(markers_list, markers_time_stamps, channels_data, time_stamps_data, recored_file_name, num_of_channels ):
+def filter_normalize(markers_list, markers_time_stamps, channels_data, time_stamps_data, recored_file_name, num_of_channels, jupyter_b = False ):
     #Filter 
     chs = []
     for i in range(0, num_of_channels):  
@@ -142,16 +141,16 @@ def filter_normalize(markers_list, markers_time_stamps, channels_data, time_stam
         chs.append(sig)    
     channels_data = np.array(chs).transpose()
     
-    #cut fitler artifact 
+    #cut fitler artifact in the beginning of the data time series  
     markers_list, markers_time_stamps, channels_data, time_stamps_data = cut_edges(markers_list, markers_time_stamps, channels_data, time_stamps_data, cut_start = REMOVE_START_ARTIFACT_AFTER_FLT, cut_stop= 0)
     
     # Visualize time series and frequencies after filtering        
-    plot_data(markers_list, markers_time_stamps, channels_data, time_stamps_data, recored_file_name + " filtered", center = False)    
+    if(jupyter_b == False): plot_data(markers_list, markers_time_stamps, channels_data, time_stamps_data, recored_file_name + " filtered", center = False, jupyter_b = jupyter_b)    
 
     #Normalize 
     channels_data = pr.normalize(channels_data, axis = 0)
     #visulaze time series and frequencies after normalization
-    plot_data(markers_list, markers_time_stamps, channels_data, time_stamps_data, recored_file_name + " Normalized", center = False)    
+    plot_data(markers_list, markers_time_stamps, channels_data, time_stamps_data, recored_file_name + " Normalized", center = False, jupyter_b = jupyter_b)    
     #read, filter, and segement target data 
     return markers_list, markers_time_stamps, channels_data, time_stamps_data, recored_file_name, num_of_channels 
 
@@ -179,7 +178,7 @@ def cut_segments(markers_list, markers_time_stamps, channels_data, time_stamps_d
 #markernames = ['Target', 'Other', 'inter']
 if __name__ == '__main__':
 
-    markers_list, markers_time_stamps, channels_data, time_stamps_data, recored_file_name, num_of_channels = read_data(RECORDING_FILE, cut_start=0,  cut_stop=0, zoomin = True)
+    markers_list, markers_time_stamps, channels_data, time_stamps_data, recored_file_name, num_of_channels = read_data(RECORDING_FILE)
     markers_list, markers_time_stamps, channels_data, time_stamps_data, recored_file_name, num_of_channels = filter_normalize(markers_list, markers_time_stamps, channels_data, time_stamps_data, recored_file_name, num_of_channels )
     cut_segments(markers_list, markers_time_stamps, channels_data, time_stamps_data, recored_file_name, num_of_channels)
 
