@@ -12,7 +12,7 @@ NOTCH_FREQ1 = 50.0  # Frequency to be removed from signal (Hz)
 NOTCH_FREQ2 = 27.5  # Frequency to be removed from signal (Hz)
 NOTCH_FREQ3 = 31.125  # Frequency to be removed from signal (Hz)
 QUALITY_FACTOR = 25  # Quality factor
-BP_WIND = [5,40] #window for the bandpass filter 
+BP_WIND = [0.5,40] #window for the bandpass filter 
 
 def filter_bp(sig):
     

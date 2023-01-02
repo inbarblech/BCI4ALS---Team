@@ -12,13 +12,13 @@ from filter_ import cut_edges
 
 def get_scaled(m_lst):
     f_list = []
-    for i in range(9):
+    for i in range(m_lst[0].shape[1]): #create data frame fo each channel
         f_list.append(pd.DataFrame())
     i = 0
     for mr in m_lst: 
         c_name = "ep" + str(i)
         i +=1
-        for ch in range(9):
+        for ch in range(mr.shape[1]):
             c = mr[:,ch:ch+1]
             c = c.reshape(c.shape[0])
             c = (c-(sum(c)/len(c)))/c.std() #Normalize
