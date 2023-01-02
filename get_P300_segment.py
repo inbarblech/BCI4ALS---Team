@@ -1,11 +1,9 @@
 import os
 import numpy as np
 import pyxdf
-import matplotlib.pyplot as plt
 from filter_ import filter_sig as flt
 from filter_ import cut_edges 
 import csv
-import pandas as pd
 from visualizer import plot_data
 from visualizer import plot_segments
 from visualizer import plot_segments_all
@@ -14,15 +12,18 @@ from sklearn import preprocessing as pr
 
 
 #RECORDED_FILE = "EEG_5_12_1.xdf"
-#RECORDED_FILE = "EEG_05_12_2.xdf"
+# = "EEG_05_12_2.xdf"
 #RECORDED_FILE = "EEG_12_12.xdf"
-RECORDED_FILE = "EEG_12_12_1.xdf"
+#RECORDED_FILE = "EEG_12_12_1.xdf"
 #RECORDED_FILE = "eeg_26_12_2.xdf"
 #RECORDED_FILE = "eeg_26_12_1.xdf"
 #RECORDED_FILE = "eeg_26_12.xdf"
+RECORDED_FILE = "eeg_31_12.xdf"
+#RECORDED_FILE = "eeg_31_12_1.xdf"
 
 PRIO_MARKER = 0.200
 POST_MARKER = 0.500
+REMOVE_START_ARTIFACT_AFTER_FLT = 3000
 
 CURRENT_FOLDER = os.getcwd()
 RECORDING_FOLDER = os.path.join(CURRENT_FOLDER, "Recordings")
@@ -91,7 +92,7 @@ def get_P300_segment(markers_list, markers_time_stamps, channels_data, time_stam
             if(stop_index == -1):
                 print("failed to find stop index")
                 start_marker_search_index = stop_index = end_of_data_s - 1
-            signal_segment = channels_data[start_index:stop_index, 0:9]
+            signal_segment = channels_data[start_index:stop_index, :]
             signal_segment_list.append(signal_segment)
             time_segment = time_stamps_data[start_index:stop_index]
             time_segment_list.append(time_segment)
@@ -119,7 +120,7 @@ def save_data(signal_segment_list, time_segment_list, markers_placement_list, ta
             for line, ts in zip(signal_segment, time_segment):
                 writer.writerow(np.hstack(([ts], line)))
     
-def read_data_cut_segments(recorded_file = RECORDED_FILE, cut_start=0,  cut_stop=0):
+def read_data(recorded_file = RECORDED_FILE, cut_start=0,  cut_stop=0, zoomin = True):
     #Read *.xdf file 
     recored_file_name = recorded_file.split('\\')[len(recorded_file.split('\\'))-1].split('.')[0]
                                             
@@ -129,28 +130,36 @@ def read_data_cut_segments(recorded_file = RECORDED_FILE, cut_start=0,  cut_stop
     #cut edges to dismiss "edge artifacts"
     channels_data, time_stamps_data, markers_time_stamps, markers_list = cut_edges(channels_data, time_stamps_data, markers_time_stamps, markers_list, cut_start = cut_start, cut_stop= cut_stop)
     # Visualize time series and frequencies 
-    plot_data(markers_list, markers_time_stamps, channels_data, time_stamps_data, recored_file_name, center = False)        
-    
+    plot_data(markers_list, markers_time_stamps, channels_data, time_stamps_data, recored_file_name, center = False, )        
+    return markers_list, markers_time_stamps, channels_data, time_stamps_data, recored_file_name, num_of_channels 
+
+def filter_normalize(markers_list, markers_time_stamps, channels_data, time_stamps_data, recored_file_name, num_of_channels ):
     #Filter 
     chs = []
     for i in range(0, num_of_channels):  
         ##filter channel data 
         sig = flt(channels_data[:,i])
         chs.append(sig)    
-    chs = np.array(chs).transpose()
+    channels_data = np.array(chs).transpose()
+    
+    #cut fitler artifact 
+    markers_list, markers_time_stamps, channels_data, time_stamps_data = cut_edges(markers_list, markers_time_stamps, channels_data, time_stamps_data, cut_start = REMOVE_START_ARTIFACT_AFTER_FLT, cut_stop= 0)
+    
     # Visualize time series and frequencies after filtering        
-    plot_data(markers_list, markers_time_stamps, chs, time_stamps_data, recored_file_name + " filtered", center = False)    
+    plot_data(markers_list, markers_time_stamps, channels_data, time_stamps_data, recored_file_name + " filtered", center = False)    
 
     #Normalize 
-    chs = pr.normalize(chs, axis = 0)
+    channels_data = pr.normalize(channels_data, axis = 0)
     #visulaze time series and frequencies after normalization
-    plot_data(markers_list, markers_time_stamps, chs, time_stamps_data, recored_file_name + " Normalized", center = False)    
+    plot_data(markers_list, markers_time_stamps, channels_data, time_stamps_data, recored_file_name + " Normalized", center = False)    
     #read, filter, and segement target data 
+    return markers_list, markers_time_stamps, channels_data, time_stamps_data, recored_file_name, num_of_channels 
 
+def cut_segments(markers_list, markers_time_stamps, channels_data, time_stamps_data, recored_file_name, num_of_channels):
     #Cut target segments
-    signal_segment_list_target, time_segment_list_target, markers_placement_list_target = get_P300_segment(markers_list, markers_time_stamps, chs, time_stamps_data, target='Target')
+    signal_segment_list_target, time_segment_list_target, markers_placement_list_target = get_P300_segment(markers_list, markers_time_stamps, channels_data, time_stamps_data, target='Target')
     #Cut other segments
-    signal_segment_list_other, time_segment_list_other, markers_placement_list_other = get_P300_segment(markers_list, markers_time_stamps, chs, time_stamps_data, target='Other')
+    signal_segment_list_other, time_segment_list_other, markers_placement_list_other = get_P300_segment(markers_list, markers_time_stamps, channels_data, time_stamps_data, target='Other')
     
     #plot target
     plot_segments(signal_segment_list_target, time_segment_list_target, markers_placement_list_target, 'Target', num_of_channels)
@@ -170,10 +179,10 @@ def read_data_cut_segments(recorded_file = RECORDED_FILE, cut_start=0,  cut_stop
 #markernames = ['Target', 'Other', 'inter']
 if __name__ == '__main__':
 
-    read_data_cut_segments(RECORDING_FILE, cut_start=500,  cut_stop=500)
+    markers_list, markers_time_stamps, channels_data, time_stamps_data, recored_file_name, num_of_channels = read_data(RECORDING_FILE, cut_start=0,  cut_stop=0, zoomin = True)
+    markers_list, markers_time_stamps, channels_data, time_stamps_data, recored_file_name, num_of_channels = filter_normalize(markers_list, markers_time_stamps, channels_data, time_stamps_data, recored_file_name, num_of_channels )
+    cut_segments(markers_list, markers_time_stamps, channels_data, time_stamps_data, recored_file_name, num_of_channels)
 
 
     
 
-      
-    

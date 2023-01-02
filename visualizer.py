@@ -50,11 +50,11 @@ def plot_segments_all(tr_lst, o_lst, signal_time, markers_placement, scale = Tru
         plt.ylim(tr.min(),tr.max())
         plt.show()
 
-def plot_data(markers_list, markers_time_stamps, channels_data, time_stamps_data, title, cut_start=0,  cut_stop=0, center = False):
+def plot_data(markers_list, markers_time_stamps, channels_data, time_stamps_data, title, cut_start=0,  cut_stop=0, center = False, zoomin = False):
     #if enabled, cut the beginning and the end artifacts 
     channels_data_full = channels_data #save for the frequency presentation 
-    if(cut_stop > 0):
-        channels_data, time_stamps_data, markers_time_stamps, markers_list = cut_edges(channels_data, time_stamps_data, markers_time_stamps, markers_list, cut_start = 0, cut_stop = 0)
+    if cut_start>0 or cut_stop >0:
+        channels_data, time_stamps_data, markers_time_stamps, markers_list = cut_edges(channels_data, time_stamps_data, markers_time_stamps, markers_list, cut_start = cut_start, cut_stop = cut_stop)
 
     #plot time series 
     plt.title(title)    
@@ -71,12 +71,17 @@ def plot_data(markers_list, markers_time_stamps, channels_data, time_stamps_data
     marker_y = [0]
     for m, m_x in zip(markers_list, markers_time_stamps):      
         plt.plot([m_x],marker_y, 'go',label='marker', markersize=5, markeredgecolor="red", markerfacecolor="green")
+    if(zoomin):
+        plt.margins(x=4, y=-0.25)    
     plt.show()
     
     #plot frequencies 
     plt.title(title)
     for ch in channels_data_full.transpose():
         plt.psd(ch, Fs = 125)
+    if(zoomin):
+        plt.margins(x=0, y=-0.3)  
+        plt.ylim(-8, 11)
     plt.show()
 
 def plot_segments(signal_segment_list, time_segment_list, markers_placement_list, target, num_of_channels):
