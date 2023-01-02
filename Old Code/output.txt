@@ -1,0 +1,26 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Nov 28 10:42:50 2022
+
+@author: marko
+"""
+
+
+found likely XDF file corruption (unpack requires a buffer of 8 bytes), scanning forward to next boundary chunk.
+Stream 1: Calculated effective sampling rate 223.3329 Hz is different from specified rate 250.0000 Hz.
+[{'info': defaultdict(<class 'list'>, {'name': ['MyMarkerStream'], 'type': ['Markers'], 'channel_count': ['1'], 'channel_format': ['string'], 'source_id': ['myuidw43536'], 'nominal_srate': ['0.000000000000000'], 'version': ['1.100000000000000'], 'created_at': ['995694.9584465000'], 'uid': ['7b497c75-6507-4b70-aca1-243770195cb1'], 'session_id': ['default'], 'hostname': ['LAPTOP-MONQRJ5H'], 'v4address': [None], 'v4data_port': ['16572'], 'v4service_port': ['16572'], 'v6address': [None], 'v6data_port': ['16572'], 'v6service_port': ['16572'], 'desc': [None], 'stream_id': 2, 'effective_srate': 0}), 'time_series': [['Rect'], ['inter'], ['Circle'], ['inter'], ['Rect'], ['inter'], ['Circle'], ['inter'], ['']], 'time_stamps': array([995903.02160925, 995906.04115897, 995908.05741798, 995911.10165721,
+       995913.12037252, 995916.13727704, 995918.15662675, 995921.17243997,
+       995927.55823985])}, {'info': defaultdict(<class 'list'>, {'name': ['obci_eeg1'], 'type': ['EEG'], 'channel_count': ['16'], 'nominal_srate': ['250'], 'channel_format': ['float32'], 'source_id': ['openbcigui'], 'version': ['1.1000000000000001'], 'created_at': ['995786.84570920002'], 'uid': ['769bff51-62e3-4e32-8e4c-7b3070c282d4'], 'session_id': ['default'], 'hostname': ['LAPTOP-MONQRJ5H'], 'v4address': [None], 'v4data_port': ['16573'], 'v4service_port': ['16573'], 'v6address': [None], 'v6data_port': ['16573'], 'v6service_port': ['16573'], 'desc': [None], 'stream_id': 1, 'effective_srate': 223.3328690044608}), 'time_series': array([[  -6.791942 ,   26.855509 ,  -37.81752  , ...,  293.3846   ,
+        -216.83086  ,  132.35878  ],
+       [  -8.608265 ,   26.4231   ,  -40.308186 , ...,   -2.7591112,
+         191.80513  , -170.55833  ],
+       [  -9.90884  ,   27.487242 ,  -31.158587 , ..., -182.5495   ,
+         117.662735 ,   64.31616  ],
+       ...,
+       [ -13.442378 ,    8.604755 ,   43.466923 , ...,   81.44661  ,
+        -190.6466   , -108.284325 ],
+       [ -13.827344 ,    2.229821 ,   47.103046 , ...,   35.806946 ,
+         182.92812  ,  -28.855047 ],
+       [ -14.06761  ,   -4.6169677,   39.806152 , ..., -332.40796  ,
+         -16.267351 ,  211.77779  ]], dtype=float32), 'time_stamps': array([995864.21086998, 995864.21534762, 995864.21982526, ...,
+       995960.28766671, 995960.29214435, 995960.29662199])}]
