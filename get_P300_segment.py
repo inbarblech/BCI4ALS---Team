@@ -19,9 +19,9 @@ from sklearn import preprocessing as pr
 #RECORDED_FILE = "eeg_26_12_2.xdf"
 RECORDED_FILE = "eeg_26_12_1.xdf"
 #RECORDED_FILE = "eeg_26_12.xdf"
-#RECORDED_FILE = "eeg_31_12.xdf"
+RECORDED_FILE = "eeg_31_12.xdf"
 #RECORDED_FILE = "eeg_31_12_1.xdf"
-RECORDED_FILE = "synt.xdf"
+#RECORDED_FILE = "synt.xdf"
 
 PRIO_MARKER = 0.200
 POST_MARKER = 0.500
@@ -159,10 +159,12 @@ def filter_normalize(markers_list, markers_time_stamps, channels_data, time_stam
 
 def cut_segments(markers_list, markers_time_stamps, channels_data, time_stamps_data, recored_file_name, num_of_channels):
     #Cut target segments
-    signal_segment_list_target, time_segment_list_target, markers_placement_list_target = get_P300_segment(markers_list, markers_time_stamps, channels_data, time_stamps_data, target='Circle-t')
+    signal_segment_list_target, time_segment_list_target, markers_placement_list_target = get_P300_segment(markers_list, markers_time_stamps, channels_data, time_stamps_data, target='Target')#'Circle-t'
     #Cut other segments
-    signal_segment_list_other, time_segment_list_other, markers_placement_list_other = get_P300_segment(markers_list, markers_time_stamps, channels_data, time_stamps_data, target='triangle')
+    signal_segment_list_other, time_segment_list_other, markers_placement_list_other = get_P300_segment(markers_list, markers_time_stamps, channels_data, time_stamps_data, target='Other')#triangle')
     #Cut gapfiller segments
+    markers_placement_list_gf = []
+    signal_segment_list_gf = []
     signal_segment_list_gf, time_segment_list_gf, markers_placement_list_gf = get_P300_segment(markers_list, markers_time_stamps, channels_data, time_stamps_data, target='gap filler')
     
     #plot target

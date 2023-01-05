@@ -7,8 +7,8 @@ Created on Wed Dec 21 20:52:17 2022
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-from filter_ import cut_edges 
-
+import os
+folder = "C:\\Users\\marko\\bci\\exercises\\upon Tomer's request"
 
 def get_scaled(m_lst):
     f_list = []
@@ -51,7 +51,8 @@ def plot_data(markers_list, markers_time_stamps, channels_data, time_stamps_data
         marker_y = [0]
         for m, m_x in zip(markers_list, markers_time_stamps):      
             plt.plot([m_x],marker_y, 'go',label='marker', markersize=5, markeredgecolor="red", markerfacecolor="green")
-        if(jupyter_b == False): plt.show()
+        plt.savefig(os.path.join(folder, title))
+        plt.show()
     
     
     #plot frequencies 
@@ -59,11 +60,12 @@ def plot_data(markers_list, markers_time_stamps, channels_data, time_stamps_data
         plt.title(title)
         for ch in channels_data.transpose():
             plt.psd(ch, Fs = 125)
-    
+        plt.savefig(os.path.join(folder, title))    
         plt.show()
 
 def plot_each_segment_all_ch(signal_segment_list, time_segment_list, markers_placement_list, target, num_of_channels):
     seg_freq = False
+    i = 0
     for signal_segment, signal_time, marker in zip(signal_segment_list, time_segment_list, markers_placement_list):        
         x_range=(signal_time - marker)*1000 #shift to place marker in x= 0
         plt.plot(x_range, signal_segment)
@@ -74,30 +76,35 @@ def plot_each_segment_all_ch(signal_segment_list, time_segment_list, markers_pla
         plt.title(target)
         plt.xlabel('msec') 
         plt.legend()
+        plt.savefig(os.path.join(folder, target + str(i)))
+        i = i+1
         plt.show()
         if (seg_freq):
             for ch in signal_segment.transpose():
                 plt.psd(ch, Fs = 125)
-        plt.show()
+            plt.savefig(os.path.join(folder, target + "fr" + str(i)))
+            plt.show()
         
 def plot_all_segments_scaled_av_per_ch(tr_lst, o_lst, g_lst, signal_time, markers_placement, scale = True):
     tr_lst = get_scaled(tr_lst)
     o_lst = get_scaled(o_lst)
-    g_lst = get_scaled(g_lst)
+    if(len(g_lst)!=0): g_lst = get_scaled(g_lst)
     i = 0
-    for tr, o, g in zip(tr_lst, o_lst, g_lst):
-        plt.title("Channel " + str(i))
-        i+=1
+    for tr, o in zip(tr_lst, o_lst):
+        plt.title("Scaled Channel " + str(i))
         x_range=(signal_time - markers_placement)*1000
         #aligne x_range and y
         if(x_range.shape[0]>tr.shape[0]): x_range = x_range[0:tr.shape[0]]
-        if(x_range.shape[0]>g.shape[0]): x_range = x_range[0:g.shape[0]]
-        if(x_range.shape[0]>o.shape[0]): x_range = x_range[0:o.shape[0]]
+        #if(x_range.shape[0]>g.shape[0]): x_range = x_range[0:g.shape[0]]
+        if(len(g_lst)!=0): 
+            if(x_range.shape[0]>o.shape[0]): x_range = x_range[0:o.shape[0]]
         plt.plot(x_range, tr[0:x_range.shape[0]])
         plt.plot(x_range, o[0:x_range.shape[0]], color = 'red')
-        plt.plot(x_range, g[0:x_range.shape[0]], color = 'grey')
+        #if(len(g_lst)!=0): plt.plot(x_range, g[0:x_range.shape[0]], color = 'grey')
         plt.ylim(tr.min(),tr.max())
+        plt.savefig(os.path.join(folder, "Scaled Channel " + str(i)))
         plt.show()   
+        i+=1
         
 def plot_all_segments_raw_av_per_ch(tr_lst, o_lst, g_lst, signal_time, markers_placement):
     ch_tr= []
@@ -107,7 +114,9 @@ def plot_all_segments_raw_av_per_ch(tr_lst, o_lst, g_lst, signal_time, markers_p
     for i in range(o_lst[0].shape[1]): ch_o.append(pd.DataFrame())
 
     ch_g= []
-    for i in range(g_lst[0].shape[1]): ch_g.append(pd.DataFrame())    
+    if(len(g_lst)!=0): 
+        for i in range(g_lst[0].shape[1]): ch_g.append(pd.DataFrame())    
+    
     ep  = 0
     for tr in tr_lst: #each tr is a different epoch
         for i in range(tr.shape[1]):
@@ -122,12 +131,13 @@ def plot_all_segments_raw_av_per_ch(tr_lst, o_lst, g_lst, signal_time, markers_p
         ep += 1
         if(ep>target_epochs_num): break #assure the same number of epochs for target and none target 
         
-    ep  = 0
-    for g in g_lst:
-        for i in range(g.shape[1]):
-            ch_g[i]= pd.concat([ch_g[i], pd.DataFrame({"ep" + str(ep):g[:,i]})], axis=1)
-        ep += 1
-        if(ep>target_epochs_num): break #assure the same number of epochs for target and none target 
+    if(len(g_lst)!=0):
+        ep  = 0
+        for g in g_lst:
+            for i in range(g.shape[1]):
+                ch_g[i]= pd.concat([ch_g[i], pd.DataFrame({"ep" + str(ep):g[:,i]})], axis=1)
+            ep += 1
+            if(ep>target_epochs_num): break #assure the same number of epochs for target and none target 
         
     x_range=(signal_time - markers_placement)*1000 #time of the first epoch, normalized to set marker at 0 is used as x axis
     
@@ -139,7 +149,8 @@ def plot_all_segments_raw_av_per_ch(tr_lst, o_lst, g_lst, signal_time, markers_p
         if(x_range.shape[0]>o.shape[0]): x_range = x_range[0:o.shape[0]]
         plt.plot(x_range, tr[0:x_range.shape[0]].mean(axis=1))
         plt.plot(x_range, o[0:x_range.shape[0]].mean(axis=1), color = 'red')
-        plt.plot(x_range, g[0:x_range.shape[0]].mean(axis=1), color = 'grey')
+        if(len(g_lst)!=0): plt.plot(x_range, g[0:x_range.shape[0]].mean(axis=1), color = 'grey')
+        plt.savefig(os.path.join(folder, "Av Channel " + str(i)))
         plt.show()
 
     
