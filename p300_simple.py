@@ -27,6 +27,38 @@ markernames = ["Circle", "Triangle", 'Rectangle']
 
 from screeninfo import get_monitors
 
+def update_exclude_indexes(all_indexes, index, exclude_indexes):
+    if index not in exclude_indexes: exclude_indexes.append(index)
+    if index-2 in all_indexes: 
+        if index-2 not in exclude_indexes: 
+            exclude_indexes.append(index-2)
+    if index+2 in exclude_indexes: 
+        if index+2 not in exclude_indexes: 
+            exclude_indexes.append(index+2)
+    return exclude_indexes
+
+def set_target_indexes(trials_N, number_of_targets):
+    all_indexes = range(0,trials_N*2,2)
+    target_indexes = random.sample(all_indexes, number_of_targets*2) #randomly pick "y" and "n"
+    number_of_indexes = len(target_indexes)
+    fixed_target_indexes = []
+    exclude_indexes = []
+    exclude_indexes = update_exclude_indexes(all_indexes, target_indexes[0], exclude_indexes)
+    for index in target_indexes: #make sure that there will be no sequence appearances 
+        neigbour = index + 2
+        if neigbour in fixed_target_indexes: continue
+        neigbour = index - 2
+        if neigbour in fixed_target_indexes: continue
+        fixed_target_indexes.append(index) 
+        exclude_indexes = update_exclude_indexes(all_indexes, index, exclude_indexes)
+    missing_indexes = number_of_indexes - len(fixed_target_indexes)
+    print(missing_indexes, len(fixed_target_indexes),number_of_indexes)
+    choose_from = np.setdiff1d(all_indexes, exclude_indexes)
+    add_indexes = random.sample(sorted(choose_from), missing_indexes) 
+    fixed_target_indexes.extend(add_indexes)
+    print(len(fixed_target_indexes))
+
+    return fixed_target_indexes
 
 def create_training_set(blocks_N:int, trials_N:int, target_ratio:float):
     tr_len = blocks_N*trials_N
@@ -34,7 +66,7 @@ def create_training_set(blocks_N:int, trials_N:int, target_ratio:float):
     training_set[range(0, tr_len *2, 2)] = GAP_FILLER
     number_of_targets = int(target_ratio*trials_N)    
     for block in range(blocks_N):
-        target_indexes = random.sample(range(0, trials_N*2, 2), number_of_targets*2) #randomly pick "y" and "n"
+        target_indexes = set_target_indexes(trials_N, number_of_targets)
         target_indexes_y = random.sample(target_indexes, number_of_targets) #randomly choose half to be "yes"
         target_indexes_n = np.setdiff1d(target_indexes, target_indexes_y) #set the rest to "no"
 
@@ -45,7 +77,7 @@ def create_training_set(blocks_N:int, trials_N:int, target_ratio:float):
     
     #choose target for each block
     if(blocks_N <=1):
-        targets = np.array([CIRCLE])
+        targets = np.array([TRIANGLE])
     else:
         targets = np.zeros(blocks_N)
         triangle_blocks = random.sample(range(0, blocks_N, 1), int(blocks_N/2))
@@ -70,7 +102,7 @@ def present_paradigm(training_set:np.array, target:np.array, width:int, height:i
     running = True
     rect, tri = draw_params(width, height)
     for block in range(NUMBER_OF_BLOCKS):
-        current_set = training_set[block*TRIALS_NUMBER:(block+1)*TRIALS_NUMBER]
+        current_set = training_set[block*TRIALS_NUMBER*2:(block+1)*TRIALS_NUMBER*2]
         print("current set", current_set)
         current_target = target[block]
         print("current_target",current_target)

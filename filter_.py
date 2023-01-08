@@ -4,8 +4,10 @@ Created on Sat Dec  3 11:39:33 2022
 
 @author: marko
 """
-
+PRIO_MARKER = 0.200
+POST_MARKER = 0.500
 from scipy import signal
+import numpy as np
 
 SAMP_FREQ = 125  # Sample frequency (Hz)
 NOTCH_FREQ1 = 50.0  # Frequency to be removed from signal (Hz)
@@ -54,3 +56,13 @@ def cut_edges(markers_list, markers_time_stamps, channels_data, time_stamps_data
         markers_time_stamps = markers_time_stamps[first_m: last_m]
         markers_list = markers_list[first_m: last_m]
     return markers_list, markers_time_stamps, channels_data, time_stamps_data
+
+def baseline_correction(signal_segment_list, time_segment_list, markers_placement_list, num_of_channels):
+    for signal_segment, epoch, time_segment, markers_placement in zip(signal_segment_list, range(len(signal_segment_list)), time_segment_list, markers_placement_list):
+        baseline_end = 0
+        while time_segment[baseline_end]<markers_placement:
+            baseline_end +=1
+        for channel in range(num_of_channels):
+            baseline = np.mean(signal_segment[:baseline_end,channel])
+            signal_segment_list[epoch][:][channel] -= baseline
+    return signal_segment_list

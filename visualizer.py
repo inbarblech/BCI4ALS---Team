@@ -47,11 +47,13 @@ def plot_data(markers_list, markers_time_stamps, channels_data, time_stamps_data
     plt.gca().legend((np.arange(1,channels_data.shape[0]+1)))
 
     #Add markers  
+    marker_y = [0]
+    for m, m_x in zip(markers_list, markers_time_stamps):      
+        if(m=='Circle-t' or m=='triangle-t'): plt.plot([m_x],marker_y, 'go',label='marker', markersize=5, markeredgecolor="blue", markerfacecolor="blue")
+        elif(m=='triangle' or m ==  "Circle"): plt.plot([m_x],marker_y, 'go',label='marker', markersize=5, markeredgecolor="red", markerfacecolor="red")
+        else: plt.plot([m_x],marker_y, 'go',label='marker', markersize=5, markeredgecolor="grey", markerfacecolor="grey")
+    plt.savefig(os.path.join(folder, title))
     if(jupyter_b == False):
-        marker_y = [0]
-        for m, m_x in zip(markers_list, markers_time_stamps):      
-            plt.plot([m_x],marker_y, 'go',label='marker', markersize=5, markeredgecolor="red", markerfacecolor="green")
-        plt.savefig(os.path.join(folder, title))
         plt.show()
     
     
@@ -90,7 +92,7 @@ def plot_all_segments_scaled_av_per_ch(tr_lst, o_lst, g_lst, signal_time, marker
     o_lst = get_scaled(o_lst)
     if(len(g_lst)!=0): g_lst = get_scaled(g_lst)
     i = 0
-    for tr, o in zip(tr_lst, o_lst):
+    for tr, o, g in zip(tr_lst, o_lst, g_lst):
         plt.title("Scaled Channel " + str(i))
         x_range=(signal_time - markers_placement)*1000
         #aligne x_range and y
@@ -100,13 +102,13 @@ def plot_all_segments_scaled_av_per_ch(tr_lst, o_lst, g_lst, signal_time, marker
             if(x_range.shape[0]>o.shape[0]): x_range = x_range[0:o.shape[0]]
         plt.plot(x_range, tr[0:x_range.shape[0]])
         plt.plot(x_range, o[0:x_range.shape[0]], color = 'red')
-        #if(len(g_lst)!=0): plt.plot(x_range, g[0:x_range.shape[0]], color = 'grey')
-        plt.ylim(tr.min(),tr.max())
+        if(len(g_lst)!=0): plt.plot(x_range, g[0:x_range.shape[0]], color = 'grey')
+        #plt.ylim(tr.min(),tr.max())
         plt.savefig(os.path.join(folder, "Scaled Channel " + str(i)))
         plt.show()   
         i+=1
         
-def plot_all_segments_raw_av_per_ch(tr_lst, o_lst, g_lst, signal_time, markers_placement):
+def plot_all_segments_raw_av_per_ch(tr_lst, o_lst, g_lst, signal_time, markers_placement, recored_file_name, current_target):
     ch_tr= []
     for i in range(tr_lst[0].shape[1]): ch_tr.append(pd.DataFrame())
     
@@ -132,25 +134,32 @@ def plot_all_segments_raw_av_per_ch(tr_lst, o_lst, g_lst, signal_time, markers_p
         if(ep>target_epochs_num): break #assure the same number of epochs for target and none target 
         
     if(len(g_lst)!=0):
+        print("g_lst")
         ep  = 0
         for g in g_lst:
             for i in range(g.shape[1]):
                 ch_g[i]= pd.concat([ch_g[i], pd.DataFrame({"ep" + str(ep):g[:,i]})], axis=1)
             ep += 1
-            if(ep>target_epochs_num): break #assure the same number of epochs for target and none target 
-        
+            if(ep>target_epochs_num): 
+                print("break", ep)
+                break #assure the same number of epochs for target and none target 
+    
     x_range=(signal_time - markers_placement)*1000 #time of the first epoch, normalized to set marker at 0 is used as x axis
     
     i = 0
-    for tr, o in zip(ch_tr, ch_o): #separate graph for each channel
-        plt.title ("ch " + str(i))
+    for tr, o, g in zip(ch_tr, ch_o, ch_g): #separate graph for each channel
+        plt.title (recored_file_name + "_ch " + str(i))
         i +=1
         if(x_range.shape[0]>tr.shape[0]): x_range = x_range[0:tr.shape[0]] #assure the same dimention for x and y
         if(x_range.shape[0]>o.shape[0]): x_range = x_range[0:o.shape[0]]
+        if(x_range.shape[0]>g.shape[0]): x_range = x_range[0:g.shape[0]]
         plt.plot(x_range, tr[0:x_range.shape[0]].mean(axis=1))
         plt.plot(x_range, o[0:x_range.shape[0]].mean(axis=1), color = 'red')
         if(len(g_lst)!=0): plt.plot(x_range, g[0:x_range.shape[0]].mean(axis=1), color = 'grey')
-        plt.savefig(os.path.join(folder, "Av Channel " + str(i)))
+        plt.savefig(os.path.join(folder, recored_file_name + "Av Channel " + str(i)))
+        if(current_target == "triangle"): none_target = "circle"
+        else: none_target = "triangle"
+        plt.gca().legend([current_target + " target", none_target + " none target", "rect gap filler"])
         plt.show()
 
     

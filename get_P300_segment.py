@@ -3,6 +3,7 @@ import numpy as np
 import pyxdf
 from filter_ import filter_sig as flt
 from filter_ import cut_edges 
+from filter_ import baseline_correction
 import csv
 from visualizer import plot_data
 from visualizer import plot_each_segment_all_ch
@@ -22,6 +23,14 @@ RECORDED_FILE = "eeg_26_12_1.xdf"
 RECORDED_FILE = "eeg_31_12.xdf"
 #RECORDED_FILE = "eeg_31_12_1.xdf"
 #RECORDED_FILE = "synt.xdf"
+#RECORDED_FILE = "EEG_6_1.xdf"
+#RECORDED_FILE = "EEG_6_1_1.xdf"
+RECORDED_FILE = "EEG_7_1_1.xdf"
+RECORDED_FILE = "EEG_7_1_2.xdf"
+#RECORDED_FILE = "EEG_7_1_3.xdf"
+#RECORDED_FILE = "EEG_7_1_4.xdf"
+#RECORDED_FILE = "EEG_8_1_1_t.xdf"
+#RECORDED_FILE = "EEG_8_1_2_t.xdf"
 
 PRIO_MARKER = 0.200
 POST_MARKER = 0.500
@@ -39,6 +48,7 @@ def get_signal(recording_file):
     data, header = pyxdf.load_xdf(recording_file)  
     line_0= data[0] 
     line_1= data[1]
+    print(data)
     if((isinstance(line_0["time_series"],list))!=True): #data/GUI streem is first 
         line_0, line_1 = line_1, line_0
     
@@ -127,7 +137,7 @@ def read_data(recorded_file = RECORDED_FILE, jupyter_b = False):
     recored_file_name = recorded_file.split('\\')[len(recorded_file.split('\\'))-1].split('.')[0]
                                             
     markers_list, markers_time_stamps, channels_data, time_stamps_data = get_signal(recorded_file)
-    print(markers_list)
+    #print(markers_list)
     num_of_channels = 10
     channels_data = channels_data[:,0:num_of_channels]
 
@@ -159,9 +169,20 @@ def filter_normalize(markers_list, markers_time_stamps, channels_data, time_stam
 
 def cut_segments(markers_list, markers_time_stamps, channels_data, time_stamps_data, recored_file_name, num_of_channels):
     #Cut target segments
-    signal_segment_list_target, time_segment_list_target, markers_placement_list_target = get_P300_segment(markers_list, markers_time_stamps, channels_data, time_stamps_data, target='Target')#'Circle-t'
-    #Cut other segments
-    signal_segment_list_other, time_segment_list_other, markers_placement_list_other = get_P300_segment(markers_list, markers_time_stamps, channels_data, time_stamps_data, target='Other')#triangle')
+    signal_segment_list_target, time_segment_list_target, markers_placement_list_target = get_P300_segment(markers_list, markers_time_stamps, channels_data, time_stamps_data, target='Circle-t')#'Target')#
+    if(markers_placement_list_target==[]):
+        signal_segment_list_target, time_segment_list_target, markers_placement_list_target = get_P300_segment(markers_list, markers_time_stamps, channels_data, time_stamps_data, target='triangle-t')#'Target')#                
+        if(markers_placement_list_target==[]): 
+            print("no target")
+            exit()
+        current_target = "triangle"
+    else:
+        current_target = "circle"
+    if(current_target == "circle"):
+        signal_segment_list_other, time_segment_list_other, markers_placement_list_other = get_P300_segment(markers_list, markers_time_stamps, channels_data, time_stamps_data, target='triangle')#'Other')#
+    else:
+        signal_segment_list_other, time_segment_list_other, markers_placement_list_other = get_P300_segment(markers_list, markers_time_stamps, channels_data, time_stamps_data, target='Circle')#'Other')#
+        
     #Cut gapfiller segments
     markers_placement_list_gf = []
     signal_segment_list_gf = []
@@ -170,14 +191,17 @@ def cut_segments(markers_list, markers_time_stamps, channels_data, time_stamps_d
     #plot target
     plot_each_segment_all_ch(signal_segment_list_target, time_segment_list_target, markers_placement_list_target, 'Target', num_of_channels)
     #plot other 
-    plot_each_segment_all_ch(signal_segment_list_other, time_segment_list_other, markers_placement_list_other, 'Other', num_of_channels)
+    #lot_each_segment_all_ch(signal_segment_list_other, time_segment_list_other, markers_placement_list_other, 'Other', num_of_channels)
     #plot gap filler 
-    plot_each_segment_all_ch(signal_segment_list_gf, time_segment_list_gf, markers_placement_list_gf, 'gap filler', num_of_channels)
+    #plot_each_segment_all_ch(signal_segment_list_gf, time_segment_list_gf, markers_placement_list_gf, 'gap filler', num_of_channels)
 
     #plot average Target and Average data on 
     plot_all_segments_scaled_av_per_ch(signal_segment_list_target, signal_segment_list_other, signal_segment_list_gf, time_segment_list_target[0], markers_placement_list_target[0])
-    plot_all_segments_raw_av_per_ch(signal_segment_list_target, signal_segment_list_other, signal_segment_list_gf, time_segment_list_target[0], markers_placement_list_target[0])
-
+    signal_segment_list_target = baseline_correction(signal_segment_list_target, time_segment_list_target, markers_placement_list_target, num_of_channels)
+    signal_segment_list_other = baseline_correction(signal_segment_list_other, time_segment_list_other, markers_placement_list_other, num_of_channels)
+    signal_segment_list_gf = baseline_correction(signal_segment_list_gf, time_segment_list_gf, markers_placement_list_gf, num_of_channels)
+    plot_all_segments_raw_av_per_ch(signal_segment_list_target, signal_segment_list_other, signal_segment_list_gf, time_segment_list_target[0], markers_placement_list_target[0], recored_file_name, current_target)
+    
     #save target segements data 
     save_data(signal_segment_list_target, time_segment_list_target, markers_placement_list_target, 'Target')
     #save other segements
