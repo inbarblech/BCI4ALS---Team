@@ -31,7 +31,6 @@ def read_input_x(path_,ch_nums,limited_number):
     first = True
     files_list = glob.glob(path_ + "\*")
     print(len(files_list))
-    i = 0
     continue_ = False
     
     for file in files_list:
@@ -58,8 +57,7 @@ def read_input_x(path_,ch_nums,limited_number):
             x = ch
         else:
             x = np.vstack((x,ch)) 
-        if(limited_number !=0 and i>=limited_number): break
-        i+=1
+        if(limited_number !=0 and x.shape[0]>=limited_number): break
     return x
 
 class EEGNet(nn.Module):

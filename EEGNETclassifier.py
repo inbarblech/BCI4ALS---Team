@@ -31,25 +31,6 @@ gf_path = "C:\\Users\\marko\\bci\\exercises\\BCI4ALS---Team\\segmented_data\\GF\
 
 def evaluate(model, X, Y, params = ["acc"]):
     results = []
-    batch_size = 17
-    
-    predicted = []
-    if(int(len(X)/batch_size>1)): 
-        range_r = int(len(X)/batch_size)
-    else: 
-        range_r = 1
-    for i in range(range_r):
-        s = i*batch_size
-        if (s+batch_size > len(X)): 
-            e = len(X)
-        else: 
-            e = i*batch_size+batch_size
-        
-        inputs = Variable(torch.from_numpy(X[s:e]))
-        pred = model(inputs)
-        
-        predicted.append(pred.data.cpu().numpy())
-        
         
     inputs = Variable(torch.from_numpy(X))
     predicted = model(inputs)
@@ -82,12 +63,13 @@ def evaluate(model, X, Y, params = ["acc"]):
             results.append(2*precision*recall/ (precision+recall))
     return results
 
+
 if __name__ == '__main__':
     net = EEGNet()
     criterion = nn.BCELoss()
     optimizer = optim.Adam(net.parameters())
     channel = [0,2,7,8,9]
-    #channel = [8]
+
     target_x = read_input_x(target_path,channel,0)   
     other_x = read_input_x(other_path,channel, 0)   
     #limit gap fillers to the number of targets/others
@@ -111,6 +93,8 @@ if __name__ == '__main__':
     X_test = np.vstack((target_x[target_test_x,:,:], other_x[other_test_x,:,:], gf_x[gf_test_x,:,:]))
     y_test = np.array([0]*len(target_test_x)+[1]*len(other_test_x)+[2]*len(gf_test_x)).astype('float32')
     print(X_test.shape, y_test.shape)
+    
+    
     batch_size = 17
     epoch_loss_values = []
     acc_metric_values_train = []
@@ -120,9 +104,9 @@ if __name__ == '__main__':
     auc_metric_values_train = []
     auc_metric_values_val = []
     auc_metric_values_test = []
-    
-    
+        
     X_train, y_train = shuffle(X_train, y_train, random_state=0)
+    
     for epoch in range(400):  # loop over the dataset multiple times
         if(epoch%200 ==0): print("\nEpoch ", epoch)
         
@@ -243,3 +227,22 @@ if __name__ == '__main__':
     plt.show()
     for tpr_, trh in zip(tpr, thresholds):
         print(tpr_, trh)
+        
+    tr = 0.45634982
+with torch.no_grad():
+    inputs = Variable(torch.from_numpy(X_test))
+    predicted = net(inputs)
+    pred_target_list = []   
+    target_list = []
+    print(y_test)
+    for pred, y_true in zip(predicted, y_test):
+        if(pred[0]>tr): pred_target = True
+        else: pred_target = False
+        if(int(y_true) == 0): target = True
+        else: target = False
+        print(pred_target, target, y_true, pred[0])
+        pred_target_list.append(pred_target)
+        target_list.append(target)
+        
+    ar = sklearn.metrics.confusion_matrix(pred_target_list, target_list, )
+    print(ar)
