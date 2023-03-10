@@ -7,7 +7,7 @@ import pandas as pd
 import warnings
 import scipy
 from filter_ import filter_bp, find_notch_freq, filter_notch
-from visualizer import plot_raw, plot_erp, plot_epochs, plot_epochs_by_event, plot_frequency_domain
+from visualizer import plot_raw, plot_erp, plot_epochs, plot_epochs_by_event, plot_frequency_domain, plot_erp_compare
 Plot_Path = os.path.join(os.getcwd(), "plots")
 Data_path = os.path.join(os.getcwd(), "segmented_data")
 
@@ -53,7 +53,7 @@ def scale_data(markers_stream, signal_stream):
     return markers_stream, eeg_signal
 
 
-def xdf2mne(fpath, plot_scale=1e-6, plot=False, fname_plot=None):
+def xdf2mne(fpath, plot_scale=1e-6, plot=False, fname_plot=''):
     """
     :param: fname (string) = file name including path
     :return: raw = MNE raw array with annotations
@@ -97,7 +97,7 @@ def remove_bad_channels(raw, bad_chs=[]):
     print(f'{bad_chs} was recognized as bad and removed')
 
 
-def filtering(raw, lfreq, hfreq, notch_th, notch_dist=50, notch_qf=25, ica_exclude=[0, 1], plot=False, fname_plot=None):
+def filtering(raw, lfreq, hfreq, notch_th, notch_dist=50, notch_qf=25, ica_exclude=[0, 1], plot=False, fname_plot=''):
     filtered_data = filter_bp(raw._data, l_freq=lfreq, h_freq=hfreq)
     raw_data_filtered = raw.copy()
     raw_data_filtered._data = filtered_data
@@ -111,8 +111,8 @@ def filtering(raw, lfreq, hfreq, notch_th, notch_dist=50, notch_qf=25, ica_exclu
     raw_data_filtered_ica = ica_processing(raw_data_filtered, ica_exclude, plot=plot)
 
     if plot:
-        plot_frequency_domain(raw, fname_plot+'original', save=True)
-        plot_frequency_domain(raw, fname_plot + 'after_filtering', save=True)
+        plot_frequency_domain(raw, f'{fname_plot}_original', save=True)
+        plot_frequency_domain(raw_data_filtered_ica, f'{fname_plot}_after_filtering', save=True)
 
     return raw_data_filtered_ica
 
@@ -122,17 +122,20 @@ def ica_processing(raw_data_filtered, ica_exclude, plot=False):
                                 method='infomax')  # TODO: try different n_components
     raw_data_filtered_ica = raw_data_filtered.copy()
     ica.fit(raw_data_filtered_ica)
-    if plot: # # TODO: RINAT - what do we see?
-        fig = ica.plot_sources(raw_data_filtered_ica, show_scrollbars=False)
-        ica.plot_components()
-        fig.savefig(f'{Plot_Path}\\{Recording_file_name}_ICA_sources.jpeg', format='jpeg')
+    if plot:
+        fig1 = ica.plot_sources(raw_data_filtered_ica, show_scrollbars=False)
+        fig2 = ica.plot_components()
+        fig1.savefig(f'{Plot_Path}\\{Recording_file_name}_ICA_sources.jpeg', format='jpeg')
+        fig2[0].savefig(f'{Plot_Path}\\{Recording_file_name}_ICA_topo.jpeg', format='jpeg')
 
     ica.exclude = ica_exclude  # 0 is blinking, 1 is heartbeats
     ica.apply(raw_data_filtered_ica)
     return raw_data_filtered_ica
 
 
-def epochs_segmentation(raw, reject_criteria, flat_criteria, t_min=-0.2, t_max=0.5, detrend=1, baseline=(-0.2, 0), plot=False, fname_plot=None):
+def epochs_segmentation(raw, target_name,
+                        reject_criteria=None, flat_criteria=None, t_min=-0.2, t_max=0.5, detrend=1, baseline=(-0.2, 0),
+                        plot=False, fname='', save2csv=False):
     """
 
     :param raw:
@@ -140,51 +143,56 @@ def epochs_segmentation(raw, reject_criteria, flat_criteria, t_min=-0.2, t_max=0
     """
     # TODO: find reject_criteria, flat_criteria in a general smart way
     events_from_annot, event_dict = mne.events_from_annotations(raw)
+    event_name_map = {target_name: "target", 'blank': 'blank', 'gap filler': 'gap filler'}
+
     epochs = mne.Epochs(raw, events_from_annot, tmin=t_min, tmax=t_max, event_id=event_dict, detrend=detrend,
                         baseline=baseline, reject=reject_criteria, flat=flat_criteria)
 
+    other = [e for e in event_dict if e not in event_name_map]
+    if len(other) > 1:  # in case of multiple other events
+        mne.epochs.combine_event_ids(epochs, other, {'other': 5}, copy=False)
+    else:
+        other = other[0]
+    event_name_map[other] = 'other'
+
+    event_id_new = {event_name_map[k]: v for k, v in epochs.event_id.items()}
+    epochs.event_id = event_id_new
+    print(f"New Annotations descriptions: {epochs.event_id.keys()}")
+
+    for event_name in epochs.event_id:
+        if save2csv:
+            save_epochs_data(epochs, event_name, fname)
+        if plot:
+            plot_epochs_by_event(epochs, event_name, fname, save=True)
 
     if plot:
-        plot_epochs(epochs, fname_plot, save=True)
+        plot_epochs(epochs, fname, save=True)
 
-    print(f'\n dropped epochs:\n{epochs.drop_log}')
+    print(f'\n Dropped epochs:\n{epochs.drop_log}')
     print(epochs)
 
     return epochs
 
 
-def erp_segmentation(epochs, target_name, inter_name, plot_epochs=False, plot_erp=False,fname=None, save2csv=False):
+def erp_segmentation(epochs, plot=False, fname='', save2csv=False):
     """
     :param epochs:
-    :param target_name:
-    :param inter_name:
-    :param plot_epochs:
-    :param plot_erp:
-    :param save2csv:
     :return:
     """
-    # TODO: make sure what to combine
-    event = epochs.event_id
-    other_event = [e for e in event if e != target_name and e != inter_name]
-    mne.epochs.combine_event_ids(epochs, other_event, {'other': 5}, copy=False)
-
-    ERP = {}
+    ERPs = {}
     for event in epochs.event_id:
-        ERP[event] = epochs[target_name].average()
+        ERPs[event] = epochs[event].average()
 
-    if plot_epochs:
-        for event_name in ERP.keys():
-            plot_epochs_by_event(epochs, event_name, fname, save=True)
-
-    if plot_erp:
-        for event_name in ERP.keys():
-            plot_erp(epochs, event_name, fname, save=True)
+    if plot:
+        plot_erp_compare(ERPs, fname, save=True)
+        for event_name in ERPs.keys():
+            plot_erp(ERPs[event_name], event_name, fname, save=True)
 
     if save2csv:
-        for event_name in ERP.keys():
-            save_erp_data(ERP[event_name], event_name,fname)
+        for event_name in ERPs.keys():
+            save_erp_data(ERPs[event_name], event_name, fname)
 
-    object_list = list(ERP.values())
+    object_list = list(ERPs.values())
 
     return object_list[0], object_list[1], object_list[2]
 
@@ -194,7 +202,21 @@ def save_erp_data(erp, erp_name, fname):
     data = np.insert(data, 0, erp.times, axis=0)
     header = erp.ch_names.copy()
     header.insert(0, 'Time')
-    #df = pd.DataFrame(data.T, index=erp.times, columns=header)
 
     df = pd.DataFrame(data.T, columns=header)
     df.to_csv(f'{Data_path}\\{fname}_{erp_name}.csv', index=True, header=True)
+
+
+def save_epochs_data(epochs, event_name, fname):
+    dir = f'{Data_path}\\{event_name}\\data'
+    check_folder = os.path.isdir(dir)
+    if not check_folder:
+        os.makedirs(dir)
+        print(f'Created new data folder: {dir}')
+
+    df = epochs[event_name].to_data_frame()
+    epochs_num = df.epoch.unique()
+    for i in epochs_num:
+        df_i = df[df.epoch==i].copy()
+        df_i.drop(columns=['condition', 'epoch'], inplace=True)
+        df_i.to_csv(f'{dir}\\{fname}_epoch_num_{i}.csv', index=False, header=True)
