@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import warnings
-import scipy
 from filter_ import filter_bp, find_notch_freq, filter_notch
 from visualizer import plot_raw, plot_erp, plot_epochs, plot_epochs_by_event, plot_frequency_domain, plot_erp_compare
 Plot_Path = os.path.join(os.getcwd(), "plots")
@@ -107,7 +106,6 @@ def filtering(raw, lfreq, hfreq, notch_th, notch_dist=50, notch_qf=25, ica_exclu
         filtered_data = filter_notch(filtered_data, f0, notch_qf)
 
     raw_data_filtered._data = filtered_data
-
     raw_data_filtered_ica = ica_processing(raw_data_filtered, ica_exclude, plot=plot)
 
     if plot:
