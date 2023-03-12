@@ -14,8 +14,8 @@ Plot_flag = False
 Save_flag = False
 
 # for fname in recordings:
-Fname = recordings[1]
-Fpath = path + '\\' + Fname
+Fname = recordings[2]
+Fpath = os.path.join(path, Fname)
 Fname = Fname[:-4]   # remove .xdf
 
 L_freq = 0.5

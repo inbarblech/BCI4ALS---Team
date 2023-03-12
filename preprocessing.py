@@ -58,7 +58,7 @@ def xdf2mne(fpath, plot_scale=1e-6, plot=False, fname_plot=''):
     :return: raw = MNE raw array with annotations
     """
     data, _ = pyxdf.load_xdf(fpath)
-    print('current file is: ' + fpath)
+    print('current file is: ' + os.path.basename(fpath))
 
     # data validation and scales
     markers, signal_rec = data_validation(data)
@@ -184,11 +184,11 @@ def erp_segmentation(epochs, plot=False, fname='', save2csv=False):
     if plot:
         plot_erp_compare(ERPs, fname, save=True)
         for event_name in ERPs.keys():
-            plot_erp(ERPs[event_name], event_name, fname, save=True)
+            plot_erp(ERPs, event_name, fname, save=True)
 
     if save2csv:
         for event_name in ERPs.keys():
-            save_erp_data(ERPs[event_name], event_name, fname)
+            save_erp_data(ERPs, event_name, fname)
 
     object_list = list(ERPs.values())
 

@@ -3,6 +3,7 @@ import sklearn.discriminant_analysis as skl_LDA
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn import svm
 import numpy as np
+from sklearn.preprocessing import StandardScaler
 import matplotlib as plt
 
 
@@ -12,6 +13,11 @@ def classifier_knn(X, y, plot):
                                                                             y,
                                                                             random_state=0,
                                                                             test_size=0.21)
+
+    scaler = StandardScaler()
+    scaler.fit(X_train)
+    scaler.transform(X_train)
+    scaler.transform(X_test)
 
     _ = knn_model.fit(X_train, np.ravel(y_train))
     y_predicted = knn_model.predict(X_test)
@@ -41,6 +47,11 @@ def classifier_svm(X, y, plot):
                                                                             y,
                                                                             random_state=0,
                                                                             test_size=0.25)
+
+    scaler = StandardScaler()
+    scaler.fit(X_train)
+    scaler.transform(X_train)
+    scaler.transform(X_test)
 
     svm_model = svm.SVC()
     _ = svm_model.fit(X_train, np.ravel(y_train))
@@ -72,6 +83,11 @@ def LDA_classifier(X, y, plot):
                                                                             y,
                                                                             random_state=0,
                                                                             test_size=0.2)
+    scaler = StandardScaler()
+    scaler.fit(X_train)
+    X_train = scaler.transform(X_train)
+    X_test = scaler.transform(X_test)
+
     LDA_model = skl_LDA.LinearDiscriminantAnalysis()
     _ = LDA_model.fit(X_train, np.ravel(y_train))
     y_predicted = LDA_model.predict(X_test)
