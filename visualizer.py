@@ -172,37 +172,37 @@ def plot_raw(raw, fname, plot_scale=1e-6, save=False):
     fig = raw.plot(scalings=dict(eeg=plot_scale), duration=20, start=0)
     fig.show()
     if save:
-        fig.savefig(f'{Plot_Path}\\{fname}_raw.jpeg', format='jpeg')
+        fig.savefig(os.path.join(Plot_Path, f'{fname}_raw.jpeg'), format='jpeg')
 
 
 def plot_frequency_domain(raw, fname, save=False):
     fig = raw.compute_psd().plot()
     fig.show()
     if save:
-        fig.savefig(f'{Plot_Path}\\{fname}_spectrum.jpeg', format='jpeg')
+        fig.savefig(os.path.join(Plot_Path, f'{fname}_spectrum.jpeg'), format='jpeg')
 
 
 def plot_epochs(epochs, fname, save=False):
     fig = epochs.plot(scalings=dict(eeg=1e-4))
     fig.show()
     if save:
-        fig.savefig(f'{Plot_Path}\\{fname}_epochs.jpeg', format='jpeg')
+        fig.savefig(os.path.join(Plot_Path, f'{fname}_epochs.jpeg'), format='jpeg')
 
 
 def plot_epochs_by_event(epochs, event_name, fname, save=False):
     fig = epochs[event_name].plot_image(picks='eeg', combine='mean', title=event_name)
     if save:
-        fig[0].savefig(f'{Plot_Path}\\{fname}_epochs_{event_name}.jpeg', format='jpeg')
+        fig[0].savefig(os.path.join(Plot_Path, f'{fname}_epochs_{event_name}.jpeg'), format='jpeg')
 
 
 def plot_erp(erp, event_name, fname, save=False):
     fig = erp[event_name].plot(titles=event_name)
     if save:
-        fig.savefig(f'{Plot_Path}\\{fname}_ERP_{event_name}.jpeg', format='jpeg')
+        fig.savefig(os.path.join(Plot_Path, f'{fname}_ERP_{event_name}.jpeg'), format='jpeg')
 
 
 def plot_erp_compare(erps, fname, save=False):
     fig = mne.viz.plot_compare_evokeds(erps, title=f'Event comparison - {fname}')
     if save:
-        fig[0].savefig(f'{Plot_Path}\\{fname}_ERP_compare.jpeg', format='jpeg')
+        fig[0].savefig(os.path.join(Plot_Path, f'{fname}_ERP_compare.jpeg'), format='jpeg')
 

@@ -11,7 +11,7 @@ path = os.path.join(os.getcwd(), "Recordings")
 recordings = os.listdir(path)  # list of all recordings files
 recordings = [fname for fname in recordings if fname[-3:] == "xdf"]
 Plot_flag = False
-Save_flag = False
+Save_flag = True
 
 # for fname in recordings:
 Fname = recordings[2]

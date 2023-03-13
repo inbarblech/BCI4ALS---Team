@@ -5,12 +5,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import warnings
+from autoreject import AutoReject, get_rejection_threshold, Ransac
+from pyprep.find_noisy_channels import NoisyChannels
 from filter_ import filter_bp, find_notch_freq, filter_notch
 from visualizer import plot_raw, plot_erp, plot_epochs, plot_epochs_by_event, plot_frequency_domain, plot_erp_compare
 Plot_Path = os.path.join(os.getcwd(), "plots")
 Data_path = os.path.join(os.getcwd(), "segmented_data")
 
-Recording_file_name = "debbi_31_1_2"
+
+Recording_file_name = "debbi_31_1_1"
 
 def data_validation(data):
     # check xdf file content
@@ -90,6 +93,8 @@ def remove_bad_channels(raw, bad_chs=[]):
     """
     occipital_chs = ['O1', 'O2']
     bad_chs += occipital_chs
+    # nd = NoisyChannels(raw)
+
     raw.info['bads'] = bad_chs
     raw.drop_channels(raw.info['bads'])
     print(raw.info)
@@ -123,8 +128,8 @@ def ica_processing(raw_data_filtered, ica_exclude, plot=False):
     if plot:
         fig1 = ica.plot_sources(raw_data_filtered_ica, show_scrollbars=False)
         fig2 = ica.plot_components()
-        fig1.savefig(f'{Plot_Path}\\{Recording_file_name}_ICA_sources.jpeg', format='jpeg')
-        fig2[0].savefig(f'{Plot_Path}\\{Recording_file_name}_ICA_topo.jpeg', format='jpeg')
+        fig1.savefig(os.path.join(Plot_Path, f'{Recording_file_name}_ICA_sources.jpeg'), format='jpeg')
+        fig2[0].savefig(os.path.join(Plot_Path, f'{Recording_file_name}_ICA_topo.jpeg'), format='jpeg')
 
     ica.exclude = ica_exclude  # 0 is blinking, 1 is heartbeats
     ica.apply(raw_data_filtered_ica)
@@ -144,7 +149,7 @@ def epochs_segmentation(raw, target_name,
     event_name_map = {target_name: "target", 'blank': 'blank', 'gap filler': 'gap filler'}
 
     epochs = mne.Epochs(raw, events_from_annot, tmin=t_min, tmax=t_max, event_id=event_dict, detrend=detrend,
-                        baseline=baseline, reject=reject_criteria, flat=flat_criteria)
+                        baseline=baseline, reject=reject_criteria, preload=True, flat=flat_criteria)
 
     other = [e for e in event_dict if e not in event_name_map]
     if len(other) > 1:  # in case of multiple other events
@@ -156,6 +161,10 @@ def epochs_segmentation(raw, target_name,
     event_id_new = {event_name_map[k]: v for k, v in epochs.event_id.items()}
     epochs.event_id = event_id_new
     print(f"New Annotations descriptions: {epochs.event_id.keys()}")
+
+    # ar = AutoReject()
+    # epochs_clean = ar.fit_transform(epochs)
+    # reject = get_rejection_threshold(epochs)
 
     for event_name in epochs.event_id:
         if save2csv:
@@ -196,17 +205,19 @@ def erp_segmentation(epochs, plot=False, fname='', save2csv=False):
 
 
 def save_erp_data(erp, erp_name, fname):
-    data = erp.data
-    data = np.insert(data, 0, erp.times, axis=0)
-    header = erp.ch_names.copy()
+    cur_erp = erp[erp_name]
+    data = cur_erp.data
+    data = np.insert(data, 0, cur_erp.times, axis=0)
+    header = cur_erp.ch_names.copy()
     header.insert(0, 'Time')
 
     df = pd.DataFrame(data.T, columns=header)
-    df.to_csv(f'{Data_path}\\{fname}_{erp_name}.csv', index=True, header=True)
+    file_path = os.path.join(Data_path, f'{fname}_{erp_name}.csv')
+    df.to_csv(file_path, index=True, header=True)
 
 
 def save_epochs_data(epochs, event_name, fname):
-    dir = f'{Data_path}\\{event_name}\\data'
+    dir = os.path.join(Data_path, event_name, 'data')
     check_folder = os.path.isdir(dir)
     if not check_folder:
         os.makedirs(dir)
@@ -217,4 +228,5 @@ def save_epochs_data(epochs, event_name, fname):
     for i in epochs_num:
         df_i = df[df.epoch==i].copy()
         df_i.drop(columns=['condition', 'epoch'], inplace=True)
-        df_i.to_csv(f'{dir}\\{fname}_epoch_num_{i}.csv', index=False, header=True)
+        file_path = os.path.join(dir, f'{fname}_epoch_num_{i}.csv')
+        df_i.to_csv(file_path, index=False, header=True)
