@@ -148,5 +148,7 @@ def plot_features(mean, ptp, rms, kurtosis, peak_amp, latency, katz_fd, hurst_ex
 if __name__ == '__main__':
     # Load segmented EEG data
     'Must change name of file to match the output of the preprocessing function'
-    eeg_data = np.load('eeg_data.npy')
-    features = extract_p300_features(eeg_data)
+    eeg_data_target = np.load('eeg_file')
+    eeg_data_non_target = np.load('eeg_file')
+    eeg_data_filler = np.load('eeg_file')
+    features = extract_p300_features(eeg_data_target, eeg_data_non_target, eeg_data_filler)
