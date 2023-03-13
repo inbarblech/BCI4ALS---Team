@@ -8,7 +8,10 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import os
+import mne
 folder = "C:\\Users\\marko\\bci\\exercises\\upon Tomer's request"
+Plot_Path = os.path.join(os.getcwd(), "plots")
+
 
 def get_scaled(m_lst):
     f_list = []
@@ -34,6 +37,7 @@ def get_scaled(m_lst):
         scaled_list.append(scaled)
     return scaled_list
 
+
 def plot_data(markers_list, markers_time_stamps, channels_data, time_stamps_data, title, center = False, jupyter_b = False):
     #plot time series 
     plt.title(title)    
@@ -55,8 +59,7 @@ def plot_data(markers_list, markers_time_stamps, channels_data, time_stamps_data
     plt.savefig(os.path.join(folder, title))
     if(jupyter_b == False):
         plt.show()
-    
-    
+
     #plot frequencies 
     if(jupyter_b == False):
         plt.title(title)
@@ -64,6 +67,7 @@ def plot_data(markers_list, markers_time_stamps, channels_data, time_stamps_data
             plt.psd(ch, Fs = 125)
         plt.savefig(os.path.join(folder, title))    
         plt.show()
+
 
 def plot_each_segment_all_ch(signal_segment_list, time_segment_list, markers_placement_list, target, num_of_channels):
     seg_freq = False
@@ -86,7 +90,8 @@ def plot_each_segment_all_ch(signal_segment_list, time_segment_list, markers_pla
                 plt.psd(ch, Fs = 125)
             plt.savefig(os.path.join(folder, target + "fr" + str(i)))
             plt.show()
-        
+
+
 def plot_all_segments_scaled_av_per_ch(tr_lst, o_lst, g_lst, signal_time, markers_placement, scale = True):
     tr_lst = get_scaled(tr_lst)
     o_lst = get_scaled(o_lst)
@@ -162,4 +167,42 @@ def plot_all_segments_raw_av_per_ch(tr_lst, o_lst, g_lst, signal_time, markers_p
         plt.gca().legend([current_target + " target", none_target + " none target", "rect gap filler"])
         plt.show()
 
-    
+
+def plot_raw(raw, fname, plot_scale=1e-6, save=False):
+    fig = raw.plot(scalings=dict(eeg=plot_scale), duration=20, start=0)
+    fig.show()
+    if save:
+        fig.savefig(f'{Plot_Path}\\{fname}_raw.jpeg', format='jpeg')
+
+
+def plot_frequency_domain(raw, fname, save=False):
+    fig = raw.compute_psd().plot()
+    fig.show()
+    if save:
+        fig.savefig(f'{Plot_Path}\\{fname}_spectrum.jpeg', format='jpeg')
+
+
+def plot_epochs(epochs, fname, save=False):
+    fig = epochs.plot(scalings=dict(eeg=1e-4))
+    fig.show()
+    if save:
+        fig.savefig(f'{Plot_Path}\\{fname}_epochs.jpeg', format='jpeg')
+
+
+def plot_epochs_by_event(epochs, event_name, fname, save=False):
+    fig = epochs[event_name].plot_image(picks='eeg', combine='mean', title=event_name)
+    if save:
+        fig[0].savefig(f'{Plot_Path}\\{fname}_epochs_{event_name}.jpeg', format='jpeg')
+
+
+def plot_erp(erp, event_name, fname, save=False):
+    fig = erp[event_name].plot(titles=event_name)
+    if save:
+        fig.savefig(f'{Plot_Path}\\{fname}_ERP_{event_name}.jpeg', format='jpeg')
+
+
+def plot_erp_compare(erps, fname, save=False):
+    fig = mne.viz.plot_compare_evokeds(erps, title=f'Event comparison - {fname}')
+    if save:
+        fig[0].savefig(f'{Plot_Path}\\{fname}_ERP_compare.jpeg', format='jpeg')
+
