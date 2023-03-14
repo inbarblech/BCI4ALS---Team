@@ -15,6 +15,9 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.autograd import Variable
 import torch.nn.functional as F
+channels_names = ['C3','C4','Cz','FC1','FC2','FC5','FC6','CP1','CP2','CP5','CP6']
+chosen_channels = [0,1,2,3,4,5,6,7,8,9,10]
+
 
 def split_test_train_val(all_indexes_len):
     all_indexes = range(0,all_indexes_len,1)
@@ -30,20 +33,21 @@ def split_test_train_val(all_indexes_len):
 def read_input_x(path_,ch_nums,limited_number):
     first = True
     files_list = glob.glob(path_ + "\*")
-    print(len(files_list))
     continue_ = False
-    
     for file in files_list:
         data = pd.read_csv(file)
+
         first_ch = True
-        for ch_num in ch_nums:
-            if(len(data[str(ch_num)])<87): 
+        for ch_num_ in ch_nums:
+            ch_name = channels_names[ch_num_]
+            if(len(data[str(ch_name)])<87): 
                 continue_ = True
                 break
-            if(max(abs(data[str(ch_num)]))>0.018): 
+            """if(max(abs(data[str(ch)]))>0.018): 
                 continue_ = True
-                break
-            ch_ = np.array(data[str(ch_num)][0:87]).reshape(1,1,87,1).astype('float32')
+                break"""
+            ch_ = np.array(data[str(ch_name)][0:87]).reshape(1,1,87,1).astype('float32')
+
             if(first_ch):
                 first_ch = False
                 ch = ch_
@@ -61,13 +65,14 @@ def read_input_x(path_,ch_nums,limited_number):
     return x
 
 class EEGNet(nn.Module):
-    def __init__(self):
+    def __init__(self, number_of_channels):
         super(EEGNet, self).__init__()
         self.T = 120
         
         # Layer 1
         #self.conv1 = nn.Conv2d(1, 16, (1, 64), padding = 0)
-        self.conv1 = nn.Conv2d(1, 16, (1, 5), padding = 0)
+        
+        self.conv1 = nn.Conv2d(1, 16, (1, number_of_channels), padding = 0)
         self.batchnorm1 = nn.BatchNorm2d(16, False)
         
         # Layer 2

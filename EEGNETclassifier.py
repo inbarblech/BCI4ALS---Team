@@ -19,6 +19,7 @@ import matplotlib.pyplot as plt
 from EEGNETtools import split_test_train_val
 from EEGNETtools import read_input_x
 from EEGNETtools import EEGNet
+from EEGNETtools import chosen_channels as channels
 from torch.autograd import Variable
 import torch
 import torch.nn as nn
@@ -65,15 +66,14 @@ def evaluate(model, X, Y, params = ["acc"]):
 
 
 if __name__ == '__main__':
-    net = EEGNet()
+    net = EEGNet(len(channels))
     criterion = nn.BCELoss()
     optimizer = optim.Adam(net.parameters())
-    channel = [0,2,7,8,9]
 
-    target_x = read_input_x(target_path,channel,0)   
-    other_x = read_input_x(other_path,channel, 0)   
+    target_x = read_input_x(target_path,channels,0)   
+    other_x = read_input_x(other_path,channels, 0)   
     #limit gap fillers to the number of targets/others
-    gf_x = read_input_x(gf_path,channel ,max(target_x.shape[0], other_x.shape[0]))   
+    gf_x = read_input_x(gf_path,channels ,max(target_x.shape[0], other_x.shape[0]))   
     print(target_x.shape, other_x.shape, gf_x.shape)
     
     target_train_x, target_test_x, target_val_x = split_test_train_val(target_x.shape[0])
@@ -172,7 +172,7 @@ if __name__ == '__main__':
                 print("Val - ", results_val)
                 print("Test - ", results_test)
     ch_name = " "
-    for ch in channel:
+    for ch in channels:
         ch_name+=str(ch) + '_'
     
     plt.figure("train", (12, 6))
@@ -228,21 +228,21 @@ if __name__ == '__main__':
     for tpr_, trh in zip(tpr, thresholds):
         print(tpr_, trh)
         
-    tr = 0.45634982
-with torch.no_grad():
-    inputs = Variable(torch.from_numpy(X_test))
-    predicted = net(inputs)
-    pred_target_list = []   
-    target_list = []
-    print(y_test)
-    for pred, y_true in zip(predicted, y_test):
-        if(pred[0]>tr): pred_target = True
-        else: pred_target = False
-        if(int(y_true) == 0): target = True
-        else: target = False
-        print(pred_target, target, y_true, pred[0])
-        pred_target_list.append(pred_target)
-        target_list.append(target)
-        
-    ar = sklearn.metrics.confusion_matrix(pred_target_list, target_list, )
-    print(ar)
+    tr = 0.3
+    with torch.no_grad():
+        inputs = Variable(torch.from_numpy(X_test))
+        predicted = net(inputs)
+        pred_target_list = []   
+        target_list = []
+        print(y_test)
+        for pred, y_true in zip(predicted, y_test):
+            if(pred[0]>tr): pred_target = True
+            else: pred_target = False
+            if(int(y_true) == 0): target = True
+            else: target = False
+            print(pred_target, target, y_true, pred)
+            pred_target_list.append(pred_target)
+            target_list.append(target)
+            
+        ar = sklearn.metrics.confusion_matrix(pred_target_list, target_list, )
+        print(ar)
