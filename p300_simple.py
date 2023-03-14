@@ -23,11 +23,13 @@ GAP_FILLER = 3
 
 CIRCLE = 0
 TRIANGLE = 1
-markernames = ["Circle", "Triangle", 'Rectangle']
 white = (255, 255, 255)
 green = (0, 255, 0)
 blue = (0, 0, 128)
 debug = False
+
+markernames = ['Circle-t', 'Circle', 'triangle-t', 'triangle', 'gap filler', 'blank', 'block start']
+
 
 from screeninfo import get_monitors
 
@@ -96,6 +98,11 @@ def draw_params(width:int, height:int):
     tri = ((margine_x,margine_y), (width - margine_x,margine_y), (width/2,height*0.9))
     return rect, tri
 
+def send_marker(value, outlet):
+    outlet.push_sample([value])
+    if(value!='gap filler' and value!='blank'): print("send", value)
+
+
 def present_paradigm(training_set:np.array, target:np.array, width:int, height:int, outlet):
     print(width, height)
     pygame.init()
@@ -119,6 +126,8 @@ def present_paradigm(training_set:np.array, target:np.array, width:int, height:i
         screen.fill(white)
         screen.blit(text, textRect)
         pygame.display.update()
+        #send "start of block to liblsl"
+        send_marker(markernames[6], outlet)
         clock.tick(0.5)
         print("current_target",current_target)
         for action in current_set:
@@ -157,12 +166,10 @@ def present_paradigm(training_set:np.array, target:np.array, width:int, height:i
                     pygame.draw.polygon(screen, (0, 0, 255), tri)
                     marker = 3
             
-            markernames = ['Circle-t', 'Circle', 'triangle-t', 'triangle', 'gap filler', 'blank']
             if(debug): print("time before outlet",markernames[marker],time.time_ns()-start_time)
             start_time = time.time_ns()
-
-            outlet.push_sample([markernames[marker]])
-            if(markernames[marker]!='gap filler' and markernames[marker]!='blank'): print("send", markernames[marker])
+            
+            send_marker(markernames[marker], outlet)
 
             if(debug): print("time after outlet",time.time_ns()-start_time)
             start_time = time.time_ns()
