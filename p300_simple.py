@@ -12,8 +12,8 @@ from pylsl import StreamInfo, StreamOutlet
 
 STIM_ONSET = 500 #ms
 TIME_BETWEEN_STIMULUS = 500 #ms
-NUMBER_OF_BLOCKS = 1
-TRIALS_NUMBER = 300
+NUMBER_OF_BLOCKS = 3
+TRIALS_NUMBER = 10
 TARGET_RATIO     = 0.1
 
 BLANCK = 0
@@ -24,6 +24,10 @@ GAP_FILLER = 3
 CIRCLE = 0
 TRIANGLE = 1
 markernames = ["Circle", "Triangle", 'Rectangle']
+white = (255, 255, 255)
+green = (0, 255, 0)
+blue = (0, 0, 128)
+debug = False
 
 from screeninfo import get_monitors
 
@@ -96,7 +100,8 @@ def present_paradigm(training_set:np.array, target:np.array, width:int, height:i
     print(width, height)
     pygame.init()
     # Set up the drawing window
-    screen = pygame.display.set_mode([width, height])    
+    screen = pygame.display.set_mode([width, height]) 
+    font = pygame.font.Font("Example.ttf", 100) 
     clock = pygame.time.Clock()
     # Run until the user asks to quit or untill done 
     running = True
@@ -105,6 +110,16 @@ def present_paradigm(training_set:np.array, target:np.array, width:int, height:i
         current_set = training_set[block*TRIALS_NUMBER*2:(block+1)*TRIALS_NUMBER*2]
         print("current set", current_set)
         current_target = target[block]
+        if(current_target == CIRCLE):
+            text = font.render("Please count circles!", True, white, blue)
+        else:
+            text = font.render("Please count triangles!", True, white, blue)
+        textRect = text.get_rect()
+        textRect.center = (width // 2, height // 2)
+        screen.fill(white)
+        screen.blit(text, textRect)
+        pygame.display.update()
+        clock.tick(0.5)
         print("current_target",current_target)
         for action in current_set:
             if(running == False):return
@@ -143,17 +158,18 @@ def present_paradigm(training_set:np.array, target:np.array, width:int, height:i
                     marker = 3
             
             markernames = ['Circle-t', 'Circle', 'triangle-t', 'triangle', 'gap filler', 'blank']
-            print("time before outlet",markernames[marker],time.time_ns()-start_time)
+            if(debug): print("time before outlet",markernames[marker],time.time_ns()-start_time)
             start_time = time.time_ns()
 
             outlet.push_sample([markernames[marker]])
+            if(markernames[marker]!='gap filler' and markernames[marker]!='blank'): print("send", markernames[marker])
 
-            print("time after outlet",time.time_ns()-start_time)
+            if(debug): print("time after outlet",time.time_ns()-start_time)
             start_time = time.time_ns()
 
             # Flip the display
             pygame.display.flip()
-            print("time after flip",time.time_ns()-start_time)
+            if(debug): print("time after flip",time.time_ns()-start_time)
 
  
     # Done! Time to quit.
