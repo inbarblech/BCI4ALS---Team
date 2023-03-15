@@ -86,19 +86,25 @@ def xdf2mne(fpath, plot_scale=1e-6, plot=False, fname_plot=''):
     return raw
 
 
-def remove_bad_channels(raw, bad_chs=[]):
+def remove_bad_channels(raw, bad_chs=[], interpolate = False):
     """
     :param: bad_chs (list) = channels to remove
     :return: raw (MNE raw) without bas channels
     """
     occipital_chs = ['O1', 'O2']
-    bad_chs += occipital_chs
-    # nd = NoisyChannels(raw)
+    raw.drop_channels(occipital_chs)  # TODO: maybe interpolate them also?
 
+    nd = NoisyChannels(raw)
+    bad_chs += [i for i in nd.ch_names_original if i not in nd.ch_names_new]
     raw.info['bads'] = bad_chs
-    raw.drop_channels(raw.info['bads'])
+
+    stat = 'removed'
+    if interpolate:
+        raw = raw.interpolate_bads(reset_bads=True)
+        stat = 'interpolated'
+
     print(raw.info)
-    print(f'{bad_chs} was recognized as bad and removed')
+    print(f'{bad_chs} was recognized as bad and {stat}')
 
 
 def filtering(raw, lfreq, hfreq, notch_th, notch_dist=50, notch_qf=25, ica_exclude=[0, 1], plot=False, fname_plot=''):
