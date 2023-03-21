@@ -2,11 +2,16 @@ import numpy as np
 from pylsl import StreamInlet, resolve_streams, local_clock
 import mne
 from collections import defaultdict
+import p300_simple as paradigm
+from multiprocessing import Process, Pipe
 
-def read_from_lsl():
+
+def read_from_lsl(multiprocessing_, conn):
+    if(multiprocessing_): conn.recv()
+    
     # resolve an EEG stream on the lab network
     print("looking for online data streams...")
-    streams = resolve_streams(wait_time = 0.008)
+    streams = resolve_streams(wait_time = 0.004)
     # create a new inlet to read from the streams
     if len(streams) == 2:
         inlet0 = StreamInlet(streams[0])
@@ -26,9 +31,9 @@ def read_from_lsl():
     markers_time = list()
     cur_marker = ''
 
-    while cur_marker != 'block start' and cur_marker != 'done':
-        data0, timestamp0 = inlet0.pull_sample(timeout = 0.008) #timout is mandatory for not loosing EEG data between markers 
-        data1, timestamp1 = inlet1.pull_sample(timeout = 0.008)
+    while cur_marker != 'block end':
+        data0, timestamp0 = inlet0.pull_sample(timeout = 0.004) #timout is mandatory for not loosing EEG data between markers 
+        data1, timestamp1 = inlet1.pull_sample(timeout = 0.004)
         if(data0!=None and data1!=None): print(f'time:{timestamp0} \n data0={data0}\n time:{timestamp1} \n data1={data1}\n')
         
         if(data0!=None and data1!=None):
@@ -58,7 +63,7 @@ def read_from_lsl():
                 markers_time.append(timestamp1)
         else:
             print("Empty stream")   
-        if(len(markers_data)>1): 
+        if(len(markers_data)>0): 
             cur_marker =   markers_data[len(markers_data)-1][0]   
 
     eeg_stream['time_series'] = np.array(eeg_data)
@@ -70,7 +75,11 @@ def read_from_lsl():
     print(markers_stream['time_series'])
     info_generate(eeg_stream, markers_stream)
     raw_stream = create_raw_from_data_streams(eeg_stream, markers_stream)
-
+    print("send output")
+    if(multiprocessing_): 
+        conn.recv()
+        print("Recieved")
+        conn.send(raw_stream)
     return raw_stream
 
 def info_generate(eeg_stream, markers_stream):
@@ -113,5 +122,29 @@ def create_raw_from_data_streams(eeg_stream, markers_stream):
 
 
 if __name__ == '__main__':
-    raw = read_from_lsl()
-    raw.plot(scalings=dict(eeg=100e-6))
+    conn1, conn2 = Pipe(duplex=True)
+    multiprocessing_ = True
+    
+    if(multiprocessing_ == False):
+        raw =read_from_lsl(False, conn1)
+        raw.plot(scalings=dict(eeg=100e-6))
+    else:
+    
+        width,height = paradigm.get_screen_param()
+        training_set, targets = paradigm.create_training_set(blocks_N = paradigm.NUMBER_OF_BLOCKS, trials_N = paradigm.TRIALS_NUMBER, target_ratio = paradigm.TARGET_RATIO)
+        
+        read_from_lsl_process = Process(target=read_from_lsl, args=(True,conn1,))
+        read_from_lsl_process.start()
+        
+        outlet = paradigm.set_outlet()
+        conn2.send("start reading streams")
+        
+        paradigm.present_paradigm(training_set, targets, width, height, outlet)
+        
+        conn2.send("stop reading streams")
+        raw_stream = conn2.recv()
+        raw_stream.plot(scalings=dict(eeg=100e-6))
+    
+        
+        read_from_lsl_process.terminate()
+        read_from_lsl_process.join()

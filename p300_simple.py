@@ -10,9 +10,10 @@ import numpy as np
 import random
 from pylsl import StreamInfo, StreamOutlet
 
+
 STIM_ONSET = 500 #ms
 TIME_BETWEEN_STIMULUS = 500 #ms
-NUMBER_OF_BLOCKS = 3
+NUMBER_OF_BLOCKS = 2
 TRIALS_NUMBER = 10
 TARGET_RATIO     = 0.1
 
@@ -20,7 +21,7 @@ BLANCK = 0
 TARGET_Y = 1
 TARGET_N = 2
 GAP_FILLER = 3
-
+1
 CIRCLE = 0
 TRIANGLE = 1
 white = (255, 255, 255)
@@ -28,7 +29,7 @@ green = (0, 255, 0)
 blue = (0, 0, 128)
 debug = False
 
-markernames = ['Circle-t', 'Circle', 'triangle-t', 'triangle', 'gap filler', 'blank', 'block start']
+markernames = ['Circle-t', 'Circle', 'triangle-t', 'triangle', 'gap filler', 'blank', 'block end']
 
 
 from screeninfo import get_monitors
@@ -114,6 +115,7 @@ def present_paradigm(training_set:np.array, target:np.array, width:int, height:i
     running = True
     rect, tri = draw_params(width, height)
     for block in range(NUMBER_OF_BLOCKS):
+        if block!=0:  send_marker(markernames[6], outlet)
         current_set = training_set[block*TRIALS_NUMBER*2:(block+1)*TRIALS_NUMBER*2]
         print("current set", current_set)
         current_target = target[block]
@@ -127,15 +129,10 @@ def present_paradigm(training_set:np.array, target:np.array, width:int, height:i
         screen.blit(text, textRect)
         pygame.display.update()
         #send "start of block to liblsl"
-        send_marker(markernames[6], outlet)
         clock.tick(0.5)
         print("current_target",current_target)
         for action in current_set:
             if(running == False):return
-            if(action == BLANCK):
-                clock.tick(1000/TIME_BETWEEN_STIMULUS)
-            else:
-                clock.tick(1000/STIM_ONSET)
         
             # Did the user click the window close button?
             for event in pygame.event.get():
@@ -177,6 +174,11 @@ def present_paradigm(training_set:np.array, target:np.array, width:int, height:i
             # Flip the display
             pygame.display.flip()
             if(debug): print("time after flip",time.time_ns()-start_time)
+            
+            if(action == BLANCK):
+                clock.tick(1000/TIME_BETWEEN_STIMULUS)
+            else:
+                clock.tick(1000/STIM_ONSET)
 
  
     # Done! Time to quit.
@@ -199,8 +201,13 @@ def get_screen_param():
     height = int(first_monitor.height*0.90)
     return width,height
 
+
+    
 if __name__ == '__main__':
     width,height = get_screen_param()
     training_set, targets = create_training_set(blocks_N = NUMBER_OF_BLOCKS, trials_N = TRIALS_NUMBER, target_ratio = TARGET_RATIO)
-    outlet = set_outlet()
+    outlet = set_outlet() 
+ 
     present_paradigm(training_set, targets, width, height, outlet)
+    
+  
