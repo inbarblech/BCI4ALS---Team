@@ -1,12 +1,12 @@
 import numpy as np
-from pylsl import StreamInlet, resolve_stream, local_clock
+from pylsl import StreamInlet, resolve_streams, local_clock
 import mne
 from collections import defaultdict
 
 def read_from_lsl():
     # resolve an EEG stream on the lab network
     print("looking for online data streams...")
-    streams = resolve_stream()
+    streams = resolve_streams(wait_time = 0.008)
     # create a new inlet to read from the streams
     if len(streams) == 2:
         inlet0 = StreamInlet(streams[0])
@@ -26,28 +26,48 @@ def read_from_lsl():
     markers_time = list()
     cur_marker = ''
 
-    while cur_marker != 'block start':
-        data0, timestamp0 = inlet0.pull_sample()
-        data1, timestamp1 = inlet1.pull_sample()
-        print(f'time:{timestamp0} \n data0={data0}\n time:{timestamp1} \n data1={data1}\n')
-        if len(data0) > 1:
-            eeg_data.append(data0)
-            eeg_time.append(timestamp0)
-            markers_data.append(data1)
-            markers_time.append(timestamp1)
+    while cur_marker != 'block start' and cur_marker != 'done':
+        data0, timestamp0 = inlet0.pull_sample(timeout = 0.008) #timout is mandatory for not loosing EEG data between markers 
+        data1, timestamp1 = inlet1.pull_sample(timeout = 0.008)
+        if(data0!=None and data1!=None): print(f'time:{timestamp0} \n data0={data0}\n time:{timestamp1} \n data1={data1}\n')
+        
+        if(data0!=None and data1!=None):
+            if len(data0) > 1:
+                eeg_data.append(data0)
+                eeg_time.append(timestamp0)
+                markers_data.append(data1)
+                markers_time.append(timestamp1)
+            else:
+                eeg_data.append(data1)
+                eeg_time.append(timestamp1)
+                markers_data.append(data0)
+                markers_time.append(timestamp0)
+        elif(data0!=None):
+            if len(data0) > 1:
+                eeg_data.append(data0)
+                eeg_time.append(timestamp0)
+            else:
+                markers_data.append(data0)
+                markers_time.append(timestamp0)
+        elif(data1!=None):
+            if len(data1) > 1:
+                eeg_data.append(data1)
+                eeg_time.append(timestamp1)
+            else:
+                markers_data.append(data1)
+                markers_time.append(timestamp1)
         else:
-            eeg_data.append(data1)
-            eeg_time.append(timestamp1)
-            markers_data.append(data0)
-            markers_time.append(timestamp0)
+            print("Empty stream")   
+        if(len(markers_data)>1): 
+            cur_marker =   markers_data[len(markers_data)-1][0]   
 
-        eeg_stream['time_series'] = np.array(eeg_data)
-        eeg_stream['time_stamps'] = np.array(eeg_time)
-        markers_stream['time_series'] = markers_data
-        markers_stream['time_stamps'] = np.array(markers_time)
+    eeg_stream['time_series'] = np.array(eeg_data)
+    eeg_stream['time_stamps'] = np.array(eeg_time)
+    markers_stream['time_series'] = markers_data
+    markers_stream['time_stamps'] = np.array(markers_time)
 
-        cur_marker = markers_stream['time_series'][-1][0]
-
+    print(eeg_stream['time_series'].shape, eeg_stream['time_stamps'].shape, len(markers_stream['time_series']), len(markers_stream['time_stamps']))
+    print(markers_stream['time_series'])
     info_generate(eeg_stream, markers_stream)
     raw_stream = create_raw_from_data_streams(eeg_stream, markers_stream)
 
