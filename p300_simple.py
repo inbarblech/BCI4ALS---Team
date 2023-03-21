@@ -29,7 +29,7 @@ green = (0, 255, 0)
 blue = (0, 0, 128)
 debug = False
 
-markernames = ['Circle-t', 'Circle', 'triangle-t', 'triangle', 'gap filler', 'blank', 'block end']
+markernames = ['Circle-t', 'Circle', 'triangle-t', 'triangle', 'gap filler', 'blank', 'block end', 'all done']
 
 
 from screeninfo import get_monitors
@@ -104,7 +104,7 @@ def send_marker(value, outlet):
     if(value!='gap filler' and value!='blank'): print("send", value)
 
 
-def present_paradigm(training_set:np.array, target:np.array, width:int, height:int, outlet):
+def present_paradigm(training_set:np.array, target:np.array, width:int, height:int, outlet, conn = None):
     print(width, height)
     pygame.init()
     # Set up the drawing window
@@ -115,7 +115,6 @@ def present_paradigm(training_set:np.array, target:np.array, width:int, height:i
     running = True
     rect, tri = draw_params(width, height)
     for block in range(NUMBER_OF_BLOCKS):
-        if block!=0:  send_marker(markernames[6], outlet)
         current_set = training_set[block*TRIALS_NUMBER*2:(block+1)*TRIALS_NUMBER*2]
         print("current set", current_set)
         current_target = target[block]
@@ -179,7 +178,11 @@ def present_paradigm(training_set:np.array, target:np.array, width:int, height:i
                 clock.tick(1000/TIME_BETWEEN_STIMULUS)
             else:
                 clock.tick(1000/STIM_ONSET)
-
+        send_marker(markernames[6], outlet) #end of block
+        if(conn !=None): 
+            print("Wait for processing")
+            conn.recv()
+    send_marker(markernames[7], outlet) #all done 
  
     # Done! Time to quit.
     pygame.quit()

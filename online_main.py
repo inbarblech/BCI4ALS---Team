@@ -6,8 +6,8 @@ import p300_simple as paradigm
 from multiprocessing import Process, Pipe
 
 
-def read_from_lsl(multiprocessing_, conn):
-    if(multiprocessing_): conn.recv()
+def read_from_lsl(multiprocessing_, conn1, conn3):
+    if(multiprocessing_): conn1.recv()
     
     # resolve an EEG stream on the lab network
     print("looking for online data streams...")
@@ -22,64 +22,68 @@ def read_from_lsl(multiprocessing_, conn):
     # create a dict inorder to save the data
     keys = ['info', 'time_series', 'time_stamps']
 
-    eeg_stream = dict.fromkeys(keys, [])
-    markers_stream = dict.fromkeys(keys, [])
-
-    eeg_data = list()
-    markers_data = list()
-    eeg_time = list()
-    markers_time = list()
     cur_marker = ''
+    while(cur_marker != 'all done'):
+        eeg_stream = dict.fromkeys(keys, [])
+        markers_stream = dict.fromkeys(keys, [])
 
-    while cur_marker != 'block end':
-        data0, timestamp0 = inlet0.pull_sample(timeout = 0.004) #timout is mandatory for not loosing EEG data between markers 
-        data1, timestamp1 = inlet1.pull_sample(timeout = 0.004)
-        if(data0!=None and data1!=None): print(f'time:{timestamp0} \n data0={data0}\n time:{timestamp1} \n data1={data1}\n')
+        eeg_data = list()
+        markers_data = list()
+        eeg_time = list()
+        markers_time = list()
+        cur_marker = ''
+        while cur_marker != 'block end' and cur_marker != 'all done':
+            data0, timestamp0 = inlet0.pull_sample(timeout = 0.004) #timout is mandatory for not loosing EEG data between markers 
+            data1, timestamp1 = inlet1.pull_sample(timeout = 0.004)
+            if(data0!=None and data1!=None): print(f'time:{timestamp0} \n data0={data0}\n time:{timestamp1} \n data1={data1}\n')
+            
+            if(data0!=None and data1!=None):
+                if len(data0) > 1:
+                    eeg_data.append(data0)
+                    eeg_time.append(timestamp0)
+                    markers_data.append(data1)
+                    markers_time.append(timestamp1)
+                else:
+                    eeg_data.append(data1)
+                    eeg_time.append(timestamp1)
+                    markers_data.append(data0)
+                    markers_time.append(timestamp0)
+            elif(data0!=None):
+                if len(data0) > 1:
+                    eeg_data.append(data0)
+                    eeg_time.append(timestamp0)
+                else:
+                    markers_data.append(data0)
+                    markers_time.append(timestamp0)
+            elif(data1!=None):
+                if len(data1) > 1:
+                    eeg_data.append(data1)
+                    eeg_time.append(timestamp1)
+                else:
+                    markers_data.append(data1)
+                    markers_time.append(timestamp1)
+            else:
+                print("Empty stream")   
+            if(len(markers_data)>0): 
+                cur_marker =   markers_data[len(markers_data)-1][0]   
+
+        if(cur_marker == 'all done'): break
+        eeg_stream['time_series'] = np.array(eeg_data)
+        eeg_stream['time_stamps'] = np.array(eeg_time)
+        markers_stream['time_series'] = markers_data
+        markers_stream['time_stamps'] = np.array(markers_time)
+
+        print(eeg_stream['time_series'].shape, eeg_stream['time_stamps'].shape, len(markers_stream['time_series']), len(markers_stream['time_stamps']))
+        print(markers_stream['time_series'])
+        info_generate(eeg_stream, markers_stream)
+        raw_stream = create_raw_from_data_streams(eeg_stream, markers_stream)
+        if(multiprocessing_ ): 
+            conn3.send("next block")
         
-        if(data0!=None and data1!=None):
-            if len(data0) > 1:
-                eeg_data.append(data0)
-                eeg_time.append(timestamp0)
-                markers_data.append(data1)
-                markers_time.append(timestamp1)
-            else:
-                eeg_data.append(data1)
-                eeg_time.append(timestamp1)
-                markers_data.append(data0)
-                markers_time.append(timestamp0)
-        elif(data0!=None):
-            if len(data0) > 1:
-                eeg_data.append(data0)
-                eeg_time.append(timestamp0)
-            else:
-                markers_data.append(data0)
-                markers_time.append(timestamp0)
-        elif(data1!=None):
-            if len(data1) > 1:
-                eeg_data.append(data1)
-                eeg_time.append(timestamp1)
-            else:
-                markers_data.append(data1)
-                markers_time.append(timestamp1)
-        else:
-            print("Empty stream")   
-        if(len(markers_data)>0): 
-            cur_marker =   markers_data[len(markers_data)-1][0]   
-
-    eeg_stream['time_series'] = np.array(eeg_data)
-    eeg_stream['time_stamps'] = np.array(eeg_time)
-    markers_stream['time_series'] = markers_data
-    markers_stream['time_stamps'] = np.array(markers_time)
-
-    print(eeg_stream['time_series'].shape, eeg_stream['time_stamps'].shape, len(markers_stream['time_series']), len(markers_stream['time_stamps']))
-    print(markers_stream['time_series'])
-    info_generate(eeg_stream, markers_stream)
-    raw_stream = create_raw_from_data_streams(eeg_stream, markers_stream)
-    print("send output")
     if(multiprocessing_): 
-        conn.recv()
+        conn1.recv()
         print("Recieved")
-        conn.send(raw_stream)
+        conn1.send(raw_stream)
     return raw_stream
 
 def info_generate(eeg_stream, markers_stream):
@@ -123,6 +127,7 @@ def create_raw_from_data_streams(eeg_stream, markers_stream):
 
 if __name__ == '__main__':
     conn1, conn2 = Pipe(duplex=True)
+    conn3, conn4 = Pipe(duplex=True)
     multiprocessing_ = True
     
     if(multiprocessing_ == False):
@@ -133,13 +138,13 @@ if __name__ == '__main__':
         width,height = paradigm.get_screen_param()
         training_set, targets = paradigm.create_training_set(blocks_N = paradigm.NUMBER_OF_BLOCKS, trials_N = paradigm.TRIALS_NUMBER, target_ratio = paradigm.TARGET_RATIO)
         
-        read_from_lsl_process = Process(target=read_from_lsl, args=(True,conn1,))
+        read_from_lsl_process = Process(target=read_from_lsl, args=(True,conn1,conn3,))
         read_from_lsl_process.start()
         
         outlet = paradigm.set_outlet()
         conn2.send("start reading streams")
         
-        paradigm.present_paradigm(training_set, targets, width, height, outlet)
+        paradigm.present_paradigm(training_set, targets, width, height, outlet, conn4)
         
         conn2.send("stop reading streams")
         raw_stream = conn2.recv()
