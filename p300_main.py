@@ -11,17 +11,16 @@ path = os.path.join(os.getcwd(), "Recordings")
 recordings = os.listdir(path)  # list of all recordings files
 recordings = [fname for fname in recordings if fname[-3:] == "xdf"]
 Plot_flag = False
-Save_flag = True
+Save_flag = False
 
 # for fname in recordings:
-Fname = recordings[2]
+Fname = recordings[1]
 Fpath = os.path.join(path, Fname)
 Fname = Fname[:-4]   # remove .xdf
 
 L_freq = 0.5
 H_freq = 40
 Target = 'triangle-t'
-Inter = 'blank'  # TODO: make sure
 
 if __name__ == '__main__':
     raw_data = xdf2mne(Fpath, plot_scale=1e-2, plot=Plot_flag, fname_plot=Fname)

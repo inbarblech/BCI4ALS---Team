@@ -21,15 +21,15 @@ def data_validation(data):
         raise RuntimeError('Unknown data format')
 
     # check streams types
-    y = data[0]['time_series']
-    if isinstance(y, list):
+    first_stream_type = data[0]['info']['type']
+    if first_stream_type[0] == 'Markers':
         markers_stream = data[0]
         signal_stream = data[1]
-    elif isinstance(y, np.ndarray):
+    elif first_stream_type[0] == 'EEG':
         markers_stream = data[1]
         signal_stream = data[0]
     else:
-        raise RuntimeError('Unknown format for time_series in data[0]')
+        raise RuntimeError('Unknown type for the first stream in data')
 
     # check number of channels
     n_chs = int(signal_stream['info']['channel_count'][0])
@@ -147,8 +147,6 @@ def epochs_segmentation(raw, target_name,
                         plot=False, fname='', save2csv=False):
     """
 
-    :param raw:
-    :return:
     """
     # TODO: find reject_criteria, flat_criteria in a general smart way
     events_from_annot, event_dict = mne.events_from_annotations(raw)
@@ -203,7 +201,7 @@ def erp_segmentation(epochs, plot=False, fname='', save2csv=False):
 
     if save2csv:
         for event_name in ERPs.keys():
-            save_erp_data(ERPs, event_name, fname)
+            save_erp_data(ERPs[event_name], event_name, fname)
 
     object_list = list(ERPs.values())
 
