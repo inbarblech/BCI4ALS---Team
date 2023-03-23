@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import warnings
 import scipy
-from preprocessing import xdf2mne, remove_bad_channels, filtering, epochs_segmentation, erp_segmentation
+from preprocessing import xdf2mne, remove_bad_channels, filtering, epochs_segmentation, erp_segmentation, data4eegnet
 
 path = os.path.join(os.getcwd(), "Recordings")
 recordings = os.listdir(path)  # list of all recordings files
@@ -25,7 +25,6 @@ Inter = 'blank'  # TODO: make sure
 
 if __name__ == '__main__':
     raw_data = xdf2mne(Fpath, plot_scale=1e-2, plot=Plot_flag, fname_plot=Fname)
-    # TODO: find bad channels (maxwell/pyprep?)
     remove_bad_channels(raw_data)
     # filtering
     raw_filtered = filtering(raw_data, L_freq, H_freq, notch_th=1e-12, notch_dist=10, notch_qf=25, ica_exclude=[0, 1], plot=Plot_flag, fname_plot=Fname)
@@ -34,6 +33,9 @@ if __name__ == '__main__':
     epochs_data = epochs_segmentation(raw_filtered, Target,
                                       reject_criteria=reject_criteria, flat_criteria=flat_criteria,
                                       plot=Plot_flag, fname=Fname, save2csv=Save_flag)
+
+    target_x, other_x, gf_x = data4eegnet(epochs_data)
+
     target_erp, inter_erp, other_erp = erp_segmentation(epochs_data, plot=True, save2csv=Save_flag, fname=Fname)
 
 
