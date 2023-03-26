@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import warnings
 import scipy
+from feature_extraction import extract_p300_features
 from preprocessing import xdf2mne, remove_bad_channels, filtering, epochs_segmentation, erp_segmentation, data4eegnet
 
 path = os.path.join(os.getcwd(), "Recordings")
@@ -38,3 +39,7 @@ if __name__ == '__main__':
     target_erp, inter_erp, other_erp = erp_segmentation(epochs_data, plot=True, save2csv=Save_flag, fname=Fname)
 
 
+    # Extract features from erp preprocessed data
+    filler_features = extract_p300_features(inter_erp)
+    target_features = extract_p300_features(target_erp)
+    non_target_features = extract_p300_features(other_erp)

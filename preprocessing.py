@@ -15,6 +15,7 @@ Data_path = os.path.join(os.getcwd(), "segmented_data")
 
 Recording_file_name = "debbi_31_1_1"
 
+
 def data_validation(data):
     # check xdf file content
     if len(data) != 2:
