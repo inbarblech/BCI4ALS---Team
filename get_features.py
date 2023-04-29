@@ -11,7 +11,6 @@ import glob
 import matplotlib.pyplot as plt
 import numpy as np
 from tsfresh import extract_features
-from tsfresh import select_features
 from tsfresh.utilities.dataframe_functions import impute
 
 DATA_FOLDER = os.path.join(os.getcwd(), "segmented_data")
@@ -49,7 +48,7 @@ def combine_channels_data(split_channels_features):
         merged_channels_features = pd.concat([merged_channels_features, i_ch_features])
     return merged_channels_features
 
-def vesualize_features(target_feat_list, other_feat_list, x, graphs_folder, x_lable):
+def visualize_features(target_feat_list, other_feat_list, x, graphs_folder, x_lable):
     if(len(target_feat_list)==0):
         print("No target data features")
     else:
@@ -159,10 +158,10 @@ def extract_all_features():
         TSFRESH_other_feat_list.append(TSFRESH_feat_all_chann)
         
     TSFRESH_x = [0,1,2,3,4,5,6,7,8]
-    vesualize_features(TSFRESH_target_feat_list,TSFRESH_other_feat_list, TSFRESH_x, TSFRESH_PLOTS_FOLDER, 'channel #')
+    visualize_features(TSFRESH_target_feat_list,TSFRESH_other_feat_list, TSFRESH_x, TSFRESH_PLOTS_FOLDER, 'channel #')
     
     TSFEL_x = [1,2,3,4]
-    vesualize_features(TSFEL_target_feat_list,TSFEL_other_feat_list, TSFEL_x, FSFEL_PLOTS_FOLDER, "window #")
+    visualize_features(TSFEL_target_feat_list,TSFEL_other_feat_list, TSFEL_x, FSFEL_PLOTS_FOLDER, "window #")
 
 
 if __name__ == '__main__':

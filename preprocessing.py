@@ -15,6 +15,7 @@ Data_path = os.path.join(os.getcwd(), "segmented_data")
 
 Recording_file_name = "debbi_31_1_1"
 
+
 def data_validation(data):
     # check xdf file content
     if len(data) != 2:
@@ -234,3 +235,16 @@ def save_epochs_data(epochs, event_name, fname):
         df_i.drop(columns=['condition', 'epoch'], inplace=True)
         file_path = os.path.join(dir, f'{fname}_epoch_num_{i}.csv')
         df_i.to_csv(file_path, index=False, header=True)
+
+
+def data4eegnet(epochs_data):
+    conds = ['target', 'other', 'gap filler']
+    arrays = []
+    for cond in conds:
+        cond_x = epochs_data[cond]._data
+        cond_x = cond_x[:, :, :, np.newaxis]
+        cond_x = np.swapaxes(cond_x, 1, 3)
+        arrays.append(cond_x)
+    return arrays
+
+
