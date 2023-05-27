@@ -11,11 +11,11 @@ from filter_ import filter_bp, find_notch_freq, filter_notch
 from visualizer import plot_raw, plot_erp, plot_epochs, plot_epochs_by_event, plot_frequency_domain, plot_erp_compare
 
 def create_data_folder(rec_name):
-    global Data_Path, Plots_Path, Segmented_Data_Path, EEGnet_Path
+    global Data_Path, Plots_Path, rec_plots, Segmented_Data_Path, EEGnet_Path
     Data_Path = os.path.join(os.path.join(os.getcwd(), os.pardir), "BCI_data")
     Plots_Path = os.path.join(Data_Path, "plots")
-    Segmented_Data_Path = os.path.join(Data_Path, "segmented_data")
     rec_plots = os.path.join(Plots_Path, rec_name)
+    Segmented_Data_Path = os.path.join(Data_Path, "segmented_data")
     EEGnet_Path = os.path.join(Segmented_Data_Path, "for_EEGNET")
     dirs = [Data_Path, Plots_Path, Segmented_Data_Path,rec_plots, EEGnet_Path]
     for d in dirs:
@@ -62,7 +62,7 @@ def scale_data(markers_stream, signal_stream):
     return markers_stream, eeg_signal
 
 
-def xdf2mne(fpath, fname, plot=False, plot_scale=1e-4):
+def xdf2mne(fpath, fname, plot=False, plot_scale=1e-3):
     """
     :param: fname (string) = file name including path
     :return: raw = MNE raw array with annotations
@@ -98,28 +98,26 @@ def xdf2mne(fpath, fname, plot=False, plot_scale=1e-4):
 
 
 def remove_bad_channels(raw, interpolate=False, remove_o=True):
-    """
-    :param: bad_chs (list) = channels to remove
-    :return: raw (MNE raw) without bas channels
-    """
-    if remove_o:
-        occipital_chs = ['O1', 'O2']
-        raw.drop_channels(occipital_chs)
-        print('occipital channels where removed')
-
+    print('\nSearching for bad channels using Pyprep...')
     nd = NoisyChannels(raw, do_detrend=True)
     nd.find_all_bads(ransac=False)
     bad_chs = list(set(nd.get_bads()))
     raw.info['bads'] = bad_chs
-
+    print(f'recognized {bad_chs} as bad')
     stat = 'removed'
     if interpolate:
         raw = raw.interpolate_bads(reset_bads=True)
         stat = 'interpolated'
 
+    occipital_chs = [ch for ch in ['O1','O2'] if ch in raw.ch_names]
+    if len(occipital_chs) != 0:
+        if remove_o:
+            raw.drop_channels(occipital_chs)
+            print('Occipital channels where removed')
+
     print(raw.info)
     print(f'{bad_chs} was recognized as bad and {stat}')
-
+    return raw
 
 def filtering(raw, lfreq, hfreq, notch_dist=50, notch_qf=25, ica_exclude=[0, 1], plot=False, fname_plot=''):
     filtered_data = filter_bp(raw._data, l_freq=lfreq, h_freq=hfreq)
@@ -134,16 +132,17 @@ def filtering(raw, lfreq, hfreq, notch_dist=50, notch_qf=25, ica_exclude=[0, 1],
     raw_data_filtered_ica = ica_processing(raw_data_filtered, ica_exclude, plot=plot,fname_plot=fname_plot)
 
     if plot:
-        plot_frequency_domain(raw,fname_plot, f'{fname_plot}_original', save=True)
-        plot_frequency_domain(raw_data_filtered_ica,fname_plot,  f'{fname_plot}_after_filtering', save=True)
+        plot_frequency_domain(raw, fname_plot, f'{fname_plot}_original', save=True)
+        plot_frequency_domain(raw_data_filtered_ica, fname_plot,  f'{fname_plot}_after_filtering', save=True)
 
     return raw_data_filtered_ica
 
 
 def ica_processing(raw_data_filtered, ica_exclude, plot=False, fname_plot=''):
     n = len(raw_data_filtered.ch_names)-len(raw_data_filtered.info['bads'])
-    ica = mne.preprocessing.ICA(n_components=n, max_iter='auto', random_state=97,
-                                method='infomax')  # TODO: try different n_components
+    if n > 8:
+        n = 8
+    ica = mne.preprocessing.ICA(n_components=n, max_iter='auto', random_state=97, method='fastica')
     raw_data_filtered_ica = raw_data_filtered.copy()
     ica.fit(raw_data_filtered_ica)
     if plot:
@@ -159,8 +158,7 @@ def ica_processing(raw_data_filtered, ica_exclude, plot=False, fname_plot=''):
 
 
 def epochs_segmentation(raw, reject_criteria_p=0.80, flat_criteria_v=1e-6, t_min=-0.2, t_max=0.5,
-                        detrend=1, baseline=(-0.2, 0), plot=False, fname='', save2csv=False):
-    # TODO: find reject_criteria, flat_criteria in a general smart way
+                        detrend=1, baseline=(-0.2, 0), auto_reject=True, plot=False, fname='', save2csv=False):
     events_from_annot, event_dict = mne.events_from_annotations(raw)
     excludes = [event_dict[i] for i in event_dict.keys() if i in ['all done', 'blank', 'block end']]
     events_include = mne.pick_events(events_from_annot, exclude=excludes)
@@ -184,11 +182,17 @@ def epochs_segmentation(raw, reject_criteria_p=0.80, flat_criteria_v=1e-6, t_min
         mne.epochs.combine_event_ids(epochs, other, {'other': max(events_include_dict.values())+1}, copy=False)
 
     print(f"New Annotations descriptions: {epochs.event_id.keys()}")
-
-    ar = AutoReject()
-    epochs_clean = ar.fit_transform(epochs)
-    reject = get_rejection_threshold(epochs)
-    print(f'\nReject epochs voltage:{reject}')
+    if auto_reject:
+        print('\nStarting epochs AutoReject, might take a while...')
+        ar = AutoReject()
+        epochs_clean = ar.fit_transform(epochs)
+        reject = get_rejection_threshold(epochs)
+        print(f'\nReject epochs voltage:{reject}')
+    else:
+        epochs_clean = epochs
+    print("Manual option was selected, please mark bad epochs on the following plot")
+    epochs_clean.plot(scalings=dict(eeg=1e-4))
+    epochs_clean.drop_bad()
 
     for event_name in epochs_clean.event_id:
         if save2csv:
@@ -206,14 +210,10 @@ def epochs_segmentation(raw, reject_criteria_p=0.80, flat_criteria_v=1e-6, t_min
 
 
 def erp_segmentation(epochs, plot=False, fname='', save2csv=False):
-    """
-    :param epochs:
-    :return:
-    """
     ERPs = {}
     for event in epochs.event_id:
         ERPs[event] = epochs[event].average()
-
+    sorted(ERPs)
     if plot:
         plot_erp_compare(ERPs, fname, save=True)
         for event_name in ERPs.keys():
@@ -224,7 +224,6 @@ def erp_segmentation(epochs, plot=False, fname='', save2csv=False):
             save_erp_data(ERPs[event_name], event_name, fname)
 
     object_list = list(ERPs.values())
-
     return object_list[0], object_list[1], object_list[2]
 
 
@@ -235,7 +234,8 @@ def save_erp_data(erp, erp_name, fname):
     header.insert(0, 'Time')
 
     df = pd.DataFrame(data.T, columns=header)
-    file_path = os.path.join(Segmented_Data_Path, f'{fname}_{erp_name}.csv')
+    dir = os.path.join(Segmented_Data_Path, erp_name)
+    file_path = os.path.join(dir, f'{fname}_{erp_name}_ERP.csv')
     df.to_csv(file_path, index=True, header=True)
 
 
@@ -243,7 +243,7 @@ def save_epochs_data(epochs, event_name, fname):
     dir = os.path.join(Segmented_Data_Path, event_name)
     if not os.path.isdir(dir):
         os.makedirs(dir)
-    df = epochs[event_name].to_data_frame()
+    df = epochs.to_data_frame()
     epochs_num = df.epoch.unique()
     for i in epochs_num:
         df_i = df[df.epoch==i].copy()
@@ -252,19 +252,21 @@ def save_epochs_data(epochs, event_name, fname):
         df_i.to_csv(file_path, index=False, header=True)
 
 
-def data4eegnet(epochs_data, to_save=False):
+def data4eegnet(epochs_data, fname, to_save=False):
     conds = list(epochs_data.event_id.keys())
+    conds.sort()
     arrays = []
     for cond in conds:
         cond_x = epochs_data[cond]._data
         cond_x = cond_x[:, :, :, np.newaxis]
         cond_x = np.swapaxes(cond_x, 1, 3)
         if to_save:
-            dir = os.path.join(EEGnet_Path, conds[0])
+            dir = os.path.join(EEGnet_Path, cond)
             if not os.path.isdir(dir):
                 os.makedirs(dir)
-                print(f'Created new folder for {cond} data')
-            np.save(dir, cond_x)
+                print(f'Created new folder of {cond} data for EEGNET')
+            save_name = os.path.join(dir, fname)
+            np.save(save_name, cond_x)
         arrays.append(cond_x)
 
     return arrays
