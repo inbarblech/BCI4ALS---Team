@@ -1,11 +1,5 @@
 import os
-import pyxdf
-import mne
-import matplotlib.pyplot as plt
-import numpy as np
-import warnings
-import scipy
-from feature_extraction import extract_p300_features
+from features.feature_extraction import extract_p300_features
 from preprocessing import xdf2mne, remove_bad_channels, filtering, epochs_segmentation, erp_segmentation, data4eegnet
 
 Plot_flag = True

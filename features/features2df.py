@@ -4,8 +4,8 @@ import os
 
 def features2df():
     DATA_FOLDER = os.path.join(os.getcwd(), "segmented_data")
-    OTHER_FEATUERS_FOLDER_TSFRESH = os.path.join(DATA_FOLDER, "other", "features", "TSFRESH")
-    TARGET_FEATUERS_FOLDER_TSFRESH = os.path.join(DATA_FOLDER, "target", "features", "TSFRESH")
+    OTHER_FEATUERS_FOLDER_TSFRESH = os.path.join(DATA_FOLDER, "other", "", "TSFRESH")
+    TARGET_FEATUERS_FOLDER_TSFRESH = os.path.join(DATA_FOLDER, "target", "", "TSFRESH")
     other_list = os.listdir(OTHER_FEATUERS_FOLDER_TSFRESH)
     target_list = os.listdir(TARGET_FEATUERS_FOLDER_TSFRESH)
     X_list = []
