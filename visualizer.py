@@ -7,19 +7,21 @@ import mne
 
 Data_Path = os.path.join(os.path.join(os.getcwd(), os.pardir), "BCI_data")
 Plots_Path = os.path.join(Data_Path, "plots")
+folder = Plots_Path
+
 
 def get_scaled(m_lst):
     f_list = []
-    for i in range(m_lst[0].shape[1]): #create data frame fo each channel
+    for i in range(m_lst[0].shape[1]):  # create data frame fo each channel
         f_list.append(pd.DataFrame())
     i = 0
     for mr in m_lst: 
         c_name = "ep" + str(i)
-        i +=1
+        i += 1
         for ch in range(mr.shape[1]):
-            c = mr[:,ch:ch+1]
+            c = mr[:, ch:ch+1]
             c = c.reshape(c.shape[0])
-            c = (c-(sum(c)/len(c)))/c.std() #Normalize
+            c = (c-(sum(c)/len(c)))/c.std()  # Normalize
             f_list[ch]= pd.concat([f_list[ch], pd.DataFrame({c_name:c})], axis=1)
     i = 0
     scaled_list=[]
@@ -144,7 +146,7 @@ def plot_all_segments_raw_av_per_ch(tr_lst, o_lst, g_lst, signal_time, markers_p
                 print("break", ep)
                 break #assure the same number of epochs for target and none target 
     
-    x_range=(signal_time - markers_placement)*1000 #time of the first epoch, normalized to set marker at 0 is used as x axis
+    x_range=(signal_time - markers_placement)*1000  # time of the first epoch, normalized to set marker at 0 is used as x axis
     
     i = 0
     for tr, o, g in zip(ch_tr, ch_o, ch_g): #separate graph for each channel
@@ -181,7 +183,7 @@ def plot_frequency_domain(raw, fname, title, save=False):
 
 def plot_epochs(epochs, fname, save=False):
     dir = os.path.join(Plots_Path, fname)
-    fig = epochs.plot(scalings=dict(eeg=1e-6))
+    fig = epochs.plot(scalings=dict(eeg=1e-4))
     fig.show()
     if save:
         fig.savefig(os.path.join(dir, f'{fname}_epochs.jpeg'), format='jpeg')
@@ -203,7 +205,7 @@ def plot_erp(erp, event_name, fname, save=False):
 
 def plot_erp_compare(erps, fname, save=False):
     dir = os.path.join(Plots_Path, fname)
-    fig = mne.viz.plot_compare_evokeds(erps, title=f'Event comparison - {fname}')
+    fig = mne.viz.plot_compare_evokeds(erps, combine='mean', title=f'Event comparison - {fname}')
     if save:
         fig[0].savefig(os.path.join(dir, f'{fname}_ERP_compare.jpeg'), format='jpeg')
 
