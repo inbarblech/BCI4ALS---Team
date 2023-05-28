@@ -20,18 +20,15 @@ The end goal of this project is to allow the subject to control smart-Home devis
 ## Repo structure
 
 ## Setups
-To run this project, first clone the repository:
-'''
-git clone https://github.com/inbarblech/BCI4ALS---Team.git  
-'''  
-Then install the requirements:  
-'''    
-cd BCI4ALS---Team
-pip install -r requirements.txt  
-'''  
+To run this project, first clone the repository:  
+`git clone https://github.com/inbarblech/BCI4ALS---Team.git`  
+Then install the requirements:   
+`cd BCI4ALS---Team`  
+`pip install -r requirements.txt`    
+In addition, you need to install openBCI-GUI and Labrecorder lsl.
 
 ## Notes
-* Current model results - 
+* Current model (EEGNET) results - 
 * All the data we used was collected using openBCI based EEG headset with 16 channels.
 
 ## Contacts
