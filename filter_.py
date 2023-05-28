@@ -77,18 +77,12 @@ def filter_notch(sig, f0, quality_factor, fs=125):
     return filteredSignal
 
 
-def find_notch_freq(raw_data, th, dist):
-    """
-
-    :param:
-     raw_data:
-     th: peaks' threshold
-    :return:
-    """
+def find_notch_freq(raw_data, dist):
     spectrum = raw_data.compute_psd()
     f = spectrum.freqs
     p = spectrum.get_data()
-    peaks_inx, _ = scipy.signal.find_peaks(p.mean(axis=0), threshold=th, distance=dist)
+    th = p.mean()
+    peaks_inx, _ = signal.find_peaks(p.mean(axis=0), threshold=th, distance=dist)
     notch_freq = f[peaks_inx]
     notch_freq = notch_freq[notch_freq > 20]
 

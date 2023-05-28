@@ -1,0 +1,12 @@
+pyxdf
+mne
+matplotlib
+numpy
+pandas
+scipy
+torch
+pygame
+pylsl
+pyprep
+autoreject
+screeninfo

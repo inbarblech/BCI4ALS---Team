@@ -1,8 +1,8 @@
 import numpy as np
-from pylsl import StreamInlet, resolve_streams, local_clock
+from pylsl import StreamInlet, resolve_streams
 import mne
 from collections import defaultdict
-import p300_simple as paradigm
+import p300_light_on_off as paradigm
 from multiprocessing import Process, Pipe
 
 
@@ -11,7 +11,7 @@ def read_from_lsl(multiprocessing_, conn1, conn3):
     
     # resolve an EEG stream on the lab network
     print("looking for online data streams...")
-    streams = resolve_streams(wait_time = 0.004)
+    streams = resolve_streams(wait_time=0.004)
     # create a new inlet to read from the streams
     if len(streams) == 2:
         inlet0 = StreamInlet(streams[0])
