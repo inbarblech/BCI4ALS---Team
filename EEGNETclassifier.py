@@ -24,9 +24,9 @@ from torch.autograd import Variable
 import torch
 import torch.nn as nn
 
-target_path = "C:\\Users\\marko\\bci\\exercises\\BCI4ALS---Team\\segmented_data\\target\\data"
-other_path = "C:\\Users\\marko\\bci\\exercises\\BCI4ALS---Team\\segmented_data\\other\\data"
-gf_path = "C:\\Users\\marko\\bci\\exercises\\BCI4ALS---Team\\segmented_data\\GF\\data"
+target_path = "C:\\Users\\PC\\Desktop\\Shira\\BCI_data\\segmented_data\\for_EEGNET\\target"
+other_path = "C:\\Users\\PC\\Desktop\\Shira\\BCI_data\\segmented_data\\for_EEGNET\\other"
+gf_path = "C:\\Users\\PC\\Desktop\\Shira\\BCI_data\\segmented_data\\for_EEGNET\\gap filler"
 
 
 

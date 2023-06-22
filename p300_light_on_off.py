@@ -8,6 +8,7 @@ import pygame
 import time
 import numpy as np
 import random
+import os
 from pylsl import StreamInfo, StreamOutlet
 
 
@@ -29,6 +30,7 @@ green = (0, 255, 0)
 blue = (0, 0, 128)
 debug = True
 
+img_path = os.path.join(os.getcwd(), 'img')
 markernames = ['LIGHT_ON-t', 'LIGHT_ON', 'LIGHT_OFF-t', 'LIGHT_OFF', 'gap filler', 'blank', 'block end', 'all done']
 
 
@@ -129,11 +131,13 @@ def present_paradigm(training_set:np.array, target:np.array, width:int, height:i
         pygame.display.update()
         #send "start of block to liblsl"
         clock.tick(0.5)
+        pygame.time.wait(7500)
         print("current_target",current_target)
         for action in current_set:
             if(running == False):return
         
-            # Did the user click the window close button?
+            # Did the user
+            # click the window close button?
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
@@ -144,24 +148,36 @@ def present_paradigm(training_set:np.array, target:np.array, width:int, height:i
             clock_tick = 1000/STIM_ONSET
             marker = 5
             if (action == GAP_FILLER):
-                imp = pygame.image.load("gf.png").convert()
+                gf_img = os.path.join(img_path,"gf.png")
+                imp = pygame.image.load(gf_img).convert()
+                #imp = pygame.transform.scale(imp, (250, 250))
                 marker = 4
             elif(action == TARGET_Y):
                 if(current_target == LIGHT_ON):
-                    imp = pygame.image.load("on.png").convert()
+                    pic = os.path.join(img_path, 'on.png')
+                    imp = pygame.image.load(pic).convert()
+                    #imp = pygame.transform.scale(imp, (1280, 720))
                     marker = 0
                 else:
-                    imp = pygame.image.load("off.png").convert()
+                    pic = os.path.join(img_path, 'off.png')
+                    imp = pygame.image.load(pic).convert()
+                    #imp = pygame.transform.scale(imp, (1280, 720))
                     marker = 2
             elif(action == TARGET_N):                
                 if(current_target == LIGHT_OFF):
-                    imp = pygame.image.load("on.png").convert()
+                    pic = os.path.join(img_path, 'on.png')
+                    imp = pygame.image.load(pic).convert()
+                    #imp = pygame.transform.scale(imp, (1280, 720))
                     marker = 1
                 else:
-                    imp = pygame.image.load("off.png").convert()
+                    pic = os.path.join(img_path, 'off.png')
+                    imp = pygame.image.load(pic).convert()
+                    #imp = pygame.transform.scale(imp, (1280, 720))
                     marker = 3
             elif(action == BLANCK):
-                imp = pygame.image.load("blank.png").convert()
+                blank_pic = os.path.join(img_path, 'blank.png')
+                imp = pygame.image.load(blank_pic).convert()
+                #imp = pygame.transform.scale(imp, (1280, 720))
                 clock_tick = 1000/TIME_BETWEEN_STIMULUS
             # Using blit to copy content from one surface to other
             screen.blit(imp, (width/3, height/3))
