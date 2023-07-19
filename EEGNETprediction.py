@@ -19,7 +19,7 @@ def EEGNET_get_epoch_type(target_x, other_x, gf_x, tr):
     print(X.shape, y.shape)
     
     net = EEGNet(len(chosen_channels))
-    net.load_state_dict(torch.load("C:\\Users\\marko\\bci\\exercises\\BCI4ALS---Team\\best_metric_model.pth"))
+    net.load_state_dict(torch.load("C:\\Users\\marko\\bci\\exercises\\BCI4ALS---Team\\best_metric_model_yar.pth"))
 
     with torch.no_grad():
         inputs = Variable(torch.from_numpy(X))
@@ -59,9 +59,10 @@ if __name__ == '__main__':
      #pred_target_list = EEGNET_get_epoch_type_from_filetarget_path()
      target_x, other_x, gf_x = get_data(target_path = "C:\\Users\\marko\\bci\\exercises\\BCI4ALS---Team\\segmented_data\\target\\data", 
                                         other_path = "C:\\Users\\marko\\bci\\exercises\\BCI4ALS---Team\\segmented_data\\other\\data", 
-                                        gf_path = "C:\\Users\\marko\\bci\\exercises\\BCI4ALS---Team\\segmented_data\\GF\\data")
-     pred_target_list = EEGNET_get_epoch_type(target_x, other_x, gf_x, tr= 0.22246733)
+                                        gf_path = "C:\\Users\\marko\\bci\\exercises\\BCI4ALS---Team\\segmented_data\\gap filler\\data")
+     pred_target_list = EEGNET_get_epoch_type(target_x, other_x, gf_x, tr= 0.3)
      print(type(target_x), target_x.shape)
+     print(type(pred_target_list), len(pred_target_list))
  
     
 
