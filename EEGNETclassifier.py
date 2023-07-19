@@ -41,7 +41,7 @@ if __name__ == '__main__':
     if classify:
         for epoch in range(400):  # loop over the dataset multiple times
             print("\nEpoch ", epoch)
-            
+
             running_loss = 0.0
             for i in range(int(len(X_train)/batch_size)+1):
                 s = i*batch_size
@@ -54,21 +54,21 @@ if __name__ == '__main__':
                 for i, y in enumerate(y_train[s:e]):
                     l[i,int(y)] = 1
                 labels = torch.FloatTensor(np.array(l*1.0))
-                
+
                 # wrap them in Variable
                 inputs, labels = Variable(inputs), Variable(labels)
-        
+
                 # zero the parameter gradients
                 optimizer.zero_grad()
-        
+
                 # forward + backward + optimize
                 outputs = net(inputs)
                 loss = criterion(outputs, labels)
                 loss.backward()
-                
-                
+
+
                 optimizer.step()
-                
+
                 #running_loss += loss.data[0]
                 running_loss += loss.item() #change data to item
             
@@ -86,7 +86,7 @@ if __name__ == '__main__':
             print("Train - ", evaluate(net, X_train, y_train, params))
             print("Validation - ", evaluate(net, X_val, y_val, params))
             print("Test - ", evaluate(net, X_test, y_test, params))
-            
+
             if  acc_v[-1] > best_metric:
                 best_metric = acc_v[-1]
                 best_metric_epoch = epoch + 1
@@ -94,7 +94,7 @@ if __name__ == '__main__':
                     "C:\\Users\\marko\\bci\\exercises\\BCI4ALS---Team", "best_metric_model_debi.pth"))
                 print("saved new best metric model", best_metric)
         EEG_class_visualize(epoch_loss_values, acc_tr, acc_v, acc_ts, auc_tr, auc_v, auc_ts)
-        
+
     
     #Test
     net.load_state_dict(torch.load("C:\\Users\\marko\\bci\\exercises\\BCI4ALS---Team\\best_metric_model_debi.pth"))
@@ -117,5 +117,5 @@ if __name__ == '__main__':
     correct_gap_f = len(correct_answers[np.where(correct_answers == 2)])
     total_gap_f = len(y_test[np.where(y_test ==2)])
     print("Gap filler correct predictions: {}, Gap filler  in test: {}, Gap filler  accuracy: {:.0%} ".format(correct_gap_f, total_gap_f, correct_gap_f/total_gap_f))
-    
+
 

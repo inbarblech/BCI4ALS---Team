@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import warnings
+from copy import deepcopy
 from autoreject import AutoReject, get_rejection_threshold
 from pyprep.find_noisy_channels import NoisyChannels
 from filter_ import filter_bp, find_notch_freq, filter_notch
@@ -61,6 +62,11 @@ def scale_data(markers_stream, signal_stream):
 
     return markers_stream, eeg_signal
 
+def cut_edges(raw):
+    t_min = raw.annotations.onset[0]
+    t_max = raw.annotations.onset[-1]
+    raw.crop(tmin=t_min-0.5, tmax=t_max+0.5)
+
 
 def xdf2mne(fpath, fname, plot=False, plot_scale=1e-3):
     """
@@ -91,6 +97,8 @@ def xdf2mne(fpath, fname, plot=False, plot_scale=1e-3):
     raw.set_annotations(annotations)
     mne.datasets.eegbci.standardize(raw)
     raw.set_eeg_reference(ref_channels="average")
+    cut_edges(raw)
+    raw._filenames = [fname]
     if plot:
         plot_raw(raw, fname, plot_scale=plot_scale, save=True)
 
@@ -99,15 +107,17 @@ def xdf2mne(fpath, fname, plot=False, plot_scale=1e-3):
 
 def remove_bad_channels(raw, interpolate=False, remove_o=True):
     print('\nSearching for bad channels using Pyprep...')
-    nd = NoisyChannels(raw, do_detrend=True)
-    nd.find_all_bads(ransac=False)
-    bad_chs = list(set(nd.get_bads()))
-    raw.info['bads'] = bad_chs
-    print(f'recognized {bad_chs} as bad')
-    stat = 'removed'
-    if interpolate:
-        raw = raw.interpolate_bads(reset_bads=True)
-        stat = 'interpolated'
+    while raw.info['bads']:
+        nd = NoisyChannels(raw, do_detrend=True)
+        nd.find_all_bads(ransac=False)
+        bad_chs = list(set(nd.get_bads()))
+        raw.info['bads'] = list(set(bad_chs + raw.info['bads']))
+        print(f"recognized {raw.info['bads']} as bad")
+        stat = 'removed'
+        if interpolate:
+            raw = raw.interpolate_bads(reset_bads=True)
+            stat = 'interpolated'
+        raw.plot(scalings=dict(eeg=1e-4))
 
     occipital_chs = [ch for ch in ['O1','O2'] if ch in raw.ch_names]
     if len(occipital_chs) != 0:
@@ -119,7 +129,7 @@ def remove_bad_channels(raw, interpolate=False, remove_o=True):
     print(f'{bad_chs} was recognized as bad and {stat}')
     return raw
 
-def filtering(raw, lfreq, hfreq, notch_dist=50, notch_qf=25, ica_exclude=[0, 1], plot=False, fname_plot=''):
+def filtering(raw, lfreq, hfreq, notch_dist=50, notch_qf=25, run_ica=True, ica_exclude=[0,1], plot=False, fname_plot=''):
     filtered_data = filter_bp(raw._data, l_freq=lfreq, h_freq=hfreq)
     raw_data_filtered = raw.copy()
     raw_data_filtered._data = filtered_data
@@ -129,13 +139,15 @@ def filtering(raw, lfreq, hfreq, notch_dist=50, notch_qf=25, ica_exclude=[0, 1],
         filtered_data = filter_notch(filtered_data, f0, notch_qf)
 
     raw_data_filtered._data = filtered_data
-    raw_data_filtered_ica = ica_processing(raw_data_filtered, ica_exclude, plot=plot,fname_plot=fname_plot)
+    if run_ica:
+        raw_data_filtered_ica = ica_processing(raw_data_filtered, ica_exclude, plot=plot,fname_plot=fname_plot)
+        raw_data_filtered = raw_data_filtered_ica
 
     if plot:
         plot_frequency_domain(raw, fname_plot, f'{fname_plot}_original', save=True)
-        plot_frequency_domain(raw_data_filtered_ica, fname_plot,  f'{fname_plot}_after_filtering', save=True)
+        plot_frequency_domain(raw_data_filtered, fname_plot,  f'{fname_plot}_after_filtering', save=True)
 
-    return raw_data_filtered_ica
+    return raw_data_filtered
 
 
 def ica_processing(raw_data_filtered, ica_exclude, plot=False, fname_plot=''):
@@ -159,6 +171,9 @@ def ica_processing(raw_data_filtered, ica_exclude, plot=False, fname_plot=''):
 
 def epochs_segmentation(raw, reject_criteria_p=0.80, flat_criteria_v=1e-6, t_min=-0.2, t_max=0.5,
                         detrend=1, baseline=(-0.2, 0), auto_reject=True, plot=False, fname='', save2csv=False):
+    raw.plot(scalings=dict(eeg=5e-5))
+    original_bads = deepcopy(raw.info['bads'])
+    raw_drop = raw.copy().drop_channels(original_bads)
     events_from_annot, event_dict = mne.events_from_annotations(raw)
     excludes = [event_dict[i] for i in event_dict.keys() if i in ['all done', 'blank', 'block end']]
     events_include = mne.pick_events(events_from_annot, exclude=excludes)
@@ -172,7 +187,7 @@ def epochs_segmentation(raw, reject_criteria_p=0.80, flat_criteria_v=1e-6, t_min
         events_include_dict['other'] = events_include_dict[other_n]
         events_include_dict.pop(other_n)
 
-    reject_criteria = dict(eeg=np.abs(raw._data).max()*reject_criteria_p)  # 100 µV
+    reject_criteria = dict(eeg=np.abs(raw_drop._data).max()*reject_criteria_p)  # 100 µV
     flat_criteria = dict(eeg=flat_criteria_v)  # 1 µV
 
     epochs = mne.Epochs(raw, events_include, tmin=t_min, tmax=t_max, event_id=events_include_dict, detrend=detrend,
@@ -193,6 +208,7 @@ def epochs_segmentation(raw, reject_criteria_p=0.80, flat_criteria_v=1e-6, t_min
     print("Manual option was selected, please mark bad epochs on the following plot")
     epochs_clean.plot(scalings=dict(eeg=1e-4))
     epochs_clean.drop_bad()
+    epochs_clean = epochs_clean.interpolate_bads(reset_bads=True)
 
     for event_name in epochs_clean.event_id:
         if save2csv:
