@@ -13,16 +13,16 @@
 * [Contacts](#Contacts)
 
 ## General info
-This project done as part of the BCI4ALS academic course
+This project was done as part of the BCI4ALS academic course
 (for more information regarding the course, please check out: https://www.brainstormil.com/bci-4-als).   
-The repository contains both online and offline pipelines that aims to predict the subject's intention regarding different stimuli.  
-The end goal of this project is to allow the subject to control smart-Home devises using BCI.
+The repository contains both online and offline pipelines that aim to predict the subject's intention regarding different stimuli.  
+The end goal of this project is to allow the subject to control Smart-Home devices using BCI.
 
 <p align="center">
 <img alt="img_3.png" height="250" src="./img/img_3.png"/>
 <img alt="img_2.png" height="250" src="./img/img_2.png"/>
 </p>
-For a detailed explanation of the project, the various functions documentation and applications, please see:
+For a detailed explanation of the project, the various functions documentation, and applications, please see:
 https://docs.google.com/document/d/1R05U__FPkcJwPW8BaAbBw7Ia1ys-FfBCWSafv4SjJFY/edit?usp=sharing
 
 ## Repo structure
@@ -53,7 +53,7 @@ Then install the requirements:
 In addition, you need to install openBCI-GUI and LabRecorder (LSL).
 
 ## Notes
-* All the data we used was collected using openBCI based EEG headset with 13 channels.
+* All the data we used was collected using openBCI based EEG headset with 13 channels and standard 10-20 configuration.
 * Current model (EEGNET) results:
   * All correct predictions: 43, Total test: 90, Total accuracy: 48% ​
   * Target correct predictions: 15, Targets in test: 28, Target accuracy: 54% ​
