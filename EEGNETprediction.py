@@ -12,6 +12,26 @@ from EEGNETtools import chosen_channels
 from EEGNETtools import read_input_x
 from torch.autograd import Variable
 
+def EEGNET_predict_target(epochs):
+    net = EEGNet(len(chosen_channels))
+    net.load_state_dict(torch.load("C:\\Users\\marko\\bci\\exercises\\BCI4ALS---Team\\best_metric_model_yar.pth"))
+    
+    with torch.no_grad():
+        inputs = Variable(torch.from_numpy(epochs))
+        predicted = net(inputs)
+        recongnized_light_on = False
+    for i, pred in enumerate(predicted):
+        index = np.argmax(pred)  #If index is 0, then this is the target. the epochs are provided as 'light on' and then 'light off'
+        if i == 0 and index == 0: recongnized_light_on = True 
+        if i == 1:
+            if index == 0:
+                if recongnized_light_on: return 'Failed to recognize' #Both on and off were recognized as target
+                else:  return 'Light Off'
+            else:
+                if recongnized_light_on: return 'Light On'
+                else: return 'Failed to recognize' #None was recognized as target 
+
+
 def EEGNET_get_epoch_type(target_x, other_x, gf_x, tr):
     print(target_x.shape, other_x.shape, gf_x.shape)
     X = np.vstack((target_x, other_x, gf_x))
