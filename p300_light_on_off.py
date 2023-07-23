@@ -8,7 +8,6 @@ import pygame
 import time
 import numpy as np
 import random
-import os
 from pylsl import StreamInfo, StreamOutlet
 
 
@@ -30,7 +29,6 @@ green = (0, 255, 0)
 blue = (0, 0, 128)
 debug = True
 
-img_path = os.path.join(os.getcwd(), 'img')
 markernames = ['LIGHT_ON-t', 'LIGHT_ON', 'LIGHT_OFF-t', 'LIGHT_OFF', 'gap filler', 'blank', 'block end', 'all done']
 
 
@@ -93,6 +91,19 @@ def create_training_set(blocks_N:int, trials_N:int, target_ratio:float):
         targets[triangle_blocks] = LIGHT_OFF
     print(targets)
     return training_set, targets
+def create_online_set():
+    tr_len = 10
+    online_set = np.zeros(tr_len*2)
+    online_set[range(0, tr_len *2, 2)] = GAP_FILLER
+    t_o = random.sample(range(10),2)
+    target_y_indexes = [t_o[0]]
+    target_n_indexes = [t_o[1]]
+
+    online_set[target_y_indexes] = TARGET_Y
+    online_set[target_n_indexes] = TARGET_N
+    
+    targets = np.array([LIGHT_OFF])
+    return online_set, targets
 
 def draw_params(width:int, height:int):
     margine_x = 0.1*width
@@ -131,13 +142,11 @@ def present_paradigm(training_set:np.array, target:np.array, width:int, height:i
         pygame.display.update()
         #send "start of block to liblsl"
         clock.tick(0.5)
-        pygame.time.wait(7500)
         print("current_target",current_target)
         for action in current_set:
             if(running == False):return
         
-            # Did the user
-            # click the window close button?
+            # Did the user click the window close button?
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
@@ -148,36 +157,24 @@ def present_paradigm(training_set:np.array, target:np.array, width:int, height:i
             clock_tick = 1000/STIM_ONSET
             marker = 5
             if (action == GAP_FILLER):
-                gf_img = os.path.join(img_path,"gf.png")
-                imp = pygame.image.load(gf_img).convert()
-                #imp = pygame.transform.scale(imp, (250, 250))
+                imp = pygame.image.load("gf.png").convert()
                 marker = 4
             elif(action == TARGET_Y):
                 if(current_target == LIGHT_ON):
-                    pic = os.path.join(img_path, 'on.png')
-                    imp = pygame.image.load(pic).convert()
-                    #imp = pygame.transform.scale(imp, (1280, 720))
+                    imp = pygame.image.load("on.png").convert()
                     marker = 0
                 else:
-                    pic = os.path.join(img_path, 'off.png')
-                    imp = pygame.image.load(pic).convert()
-                    #imp = pygame.transform.scale(imp, (1280, 720))
+                    imp = pygame.image.load("off.png").convert()
                     marker = 2
             elif(action == TARGET_N):                
                 if(current_target == LIGHT_OFF):
-                    pic = os.path.join(img_path, 'on.png')
-                    imp = pygame.image.load(pic).convert()
-                    #imp = pygame.transform.scale(imp, (1280, 720))
+                    imp = pygame.image.load("on.png").convert()
                     marker = 1
                 else:
-                    pic = os.path.join(img_path, 'off.png')
-                    imp = pygame.image.load(pic).convert()
-                    #imp = pygame.transform.scale(imp, (1280, 720))
+                    imp = pygame.image.load("off.png").convert()
                     marker = 3
             elif(action == BLANCK):
-                blank_pic = os.path.join(img_path, 'blank.png')
-                imp = pygame.image.load(blank_pic).convert()
-                #imp = pygame.transform.scale(imp, (1280, 720))
+                imp = pygame.image.load("blank.png").convert()
                 clock_tick = 1000/TIME_BETWEEN_STIMULUS
             # Using blit to copy content from one surface to other
             screen.blit(imp, (width/3, height/3))
@@ -223,6 +220,8 @@ def get_screen_param():
 if __name__ == '__main__':
     width,height = get_screen_param()
     training_set, targets = create_training_set(blocks_N = NUMBER_OF_BLOCKS, trials_N = TRIALS_NUMBER, target_ratio = TARGET_RATIO)
+    print(len(training_set[training_set==1]), len(training_set[training_set==2]), len(training_set[training_set==3]))
+    print(targets)
     outlet = set_outlet() 
  
     present_paradigm(training_set, targets, width, height, outlet)

@@ -136,7 +136,7 @@ if __name__ == '__main__':
     else:
     
         width,height = paradigm.get_screen_param()
-        training_set, targets = paradigm.create_training_set(blocks_N = paradigm.NUMBER_OF_BLOCKS, trials_N = paradigm.TRIALS_NUMBER, target_ratio = paradigm.TARGET_RATIO)
+        training_set, targets = paradigm.create_online_set()
         
         read_from_lsl_process = Process(target=read_from_lsl, args=(True,conn1,conn3,))
         read_from_lsl_process.start()
