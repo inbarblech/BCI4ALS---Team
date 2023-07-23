@@ -19,8 +19,8 @@ The repository contains both online and offline pipelines that aim to predict th
 The end goal of this project is to allow the subject to control Smart-Home devices using BCI.
 
 <p align="center">
-<img alt="img_3.png" height="250" src="./img/img_3.png"/>
-<img alt="img_2.png" height="250" src="./img/img_2.png"/>
+<img alt="img_3.png" height="350" src="./img/img_3.png"/>
+<img alt="img_2.png" height="350" src="./img/img_2.png"/>
 </p>
 For a detailed explanation of the project, the various functions documentation, and applications, please see:
 https://docs.google.com/document/d/1R05U__FPkcJwPW8BaAbBw7Ia1ys-FfBCWSafv4SjJFY/edit?usp=sharing
