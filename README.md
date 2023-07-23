@@ -19,30 +19,30 @@ The repository contains both online and offline pipelines that aims to predict t
 The end goal of this project is to allow the subject to control smart-Home devises using BCI.
 
 <p align="center">
-<img alt="img_3.png" height="150" src="./img/img_3.png"/>
-<img alt="img_2.png" height="150" src="./img/img_2.png"/>
+<img alt="img_3.png" height="250" src="./img/img_3.png"/>
+<img alt="img_2.png" height="250" src="./img/img_2.png"/>
 </p>
 For a detailed explanation of the project, the various functions documentation and applications, please see:
 https://docs.google.com/document/d/1R05U__FPkcJwPW8BaAbBw7Ia1ys-FfBCWSafv4SjJFY/edit?usp=sharing
 
 ## Repo structure
 
-├──Project folder<br>
-&emsp;&emsp;└──p300_light_on_off.py - the GUI for presenting P300 paradigm.<br>
-&emsp;&emsp;└──Offline_main.py - preprocessing offline recordings.<br>
-&emsp;&emsp;└──EEGNET_classifier.py - offline model training.<br>
-&emsp;&emsp;└──Online_main.py - online full pipeline - from streaming to prediction.<br>
-&emsp;&emsp;└──Old code - including different models implementations.<br>
-&emsp;&emsp;&emsp;&emsp;└── features - for different models<br>
+├──BCI4ALS---Team - main project folder<br>
+&emsp;&emsp;└── p300_light_on_off.py - the GUI for presenting P300 paradigm.<br>
+&emsp;&emsp;└── offline_main.py - preprocessing offline recordings.<br>
+&emsp;&emsp;└── EEGNET_classifier.py - offline model training.<br>
+&emsp;&emsp;└── online_main.py - online full pipeline - from streaming to prediction.<br>
+&emsp;&emsp;└── Old code - including different models implementations.<br>
+&emsp;&emsp;&emsp;&emsp;└── features - relevant files for different ML models<br>
 ├──BCI_data - main data folder<br>
-&emsp;&emsp;└──Recordings<br>
-&emsp;&emsp;└──plots<br>
-&emsp;&emsp;└──Segmented_data<br>
-&emsp;&emsp;&emsp;&emsp;└──for_EEGNET<br>
-&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;└──{event name}<br>
-&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;└──{file name}.npy<br>
+&emsp;&emsp;└── Recordings<br>
+&emsp;&emsp;└── plots<br>
+&emsp;&emsp;└── Segmented_data<br>
+&emsp;&emsp;&emsp;&emsp;└── for_EEGNET<br>
+&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;└── {event name}<br>
+&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;└── {file name}.npy<br>
 
-* All necessary sub-folders will be created automatically, but it is best to ensure that your relevant recordings are saved in ../BCI_data/Recordings before running any preprocessing script.
+* Note that all necessary sub-folders will be created automatically, but it is best to ensure that your relevant recordings are saved in ../BCI_data/Recordings before running any preprocessing script.
 
 ## Setups
 To run this project, first clone the repository:  

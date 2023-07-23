@@ -122,7 +122,7 @@ def present_paradigm(training_set:np.array, target:np.array, width:int, height:i
     pygame.init()
     # Set up the drawing window
     screen = pygame.display.set_mode([width, height]) 
-    font = pygame.font.Font("Example.ttf", 100) 
+    font = pygame.font.Font("./img/Example.ttf", 100)
     clock = pygame.time.Clock()
     # Run until the user asks to quit or untill done 
     running = True
@@ -157,24 +157,24 @@ def present_paradigm(training_set:np.array, target:np.array, width:int, height:i
             clock_tick = 1000/STIM_ONSET
             marker = 5
             if (action == GAP_FILLER):
-                imp = pygame.image.load("gf.png").convert()
+                imp = pygame.image.load("./img/gf.png").convert()
                 marker = 4
             elif(action == TARGET_Y):
                 if(current_target == LIGHT_ON):
-                    imp = pygame.image.load("on.png").convert()
+                    imp = pygame.image.load("./img/on.png").convert()
                     marker = 0
                 else:
-                    imp = pygame.image.load("off.png").convert()
+                    imp = pygame.image.load("./img/off.png").convert()
                     marker = 2
             elif(action == TARGET_N):                
                 if(current_target == LIGHT_OFF):
-                    imp = pygame.image.load("on.png").convert()
+                    imp = pygame.image.load("./img/on.png").convert()
                     marker = 1
                 else:
-                    imp = pygame.image.load("off.png").convert()
+                    imp = pygame.image.load("./img/off.png").convert()
                     marker = 3
             elif(action == BLANCK):
-                imp = pygame.image.load("blank.png").convert()
+                imp = pygame.image.load("./img/blank.png").convert()
                 clock_tick = 1000/TIME_BETWEEN_STIMULUS
             # Using blit to copy content from one surface to other
             screen.blit(imp, (width/3, height/3))

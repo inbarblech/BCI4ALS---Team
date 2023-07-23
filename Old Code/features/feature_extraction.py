@@ -5,6 +5,7 @@ import scipy.stats as stats
 from scipy.signal import find_peaks
 from scipy.signal import detrend
 import matplotlib.pyplot as plt
+from mne_features.feature_extraction import FeatureExtractor
 
 
 def get_katz_fd(signal):
@@ -42,7 +43,6 @@ def extract_p300_features(ep):
         epochs_features (numpy array): Arrays of extracted features in the shape of (num_trials, num_features).
         features_list
     """
-    from mne_features.feature_extraction import FeatureExtractor
     features_list = ['mean', 'variance', 'ptp_amp', 'kurtosis', 'rms', 'hurst_exp', 'katz_fd']
     Fs = ep.info['sfreq']
     ep_data = ep.get_data()
