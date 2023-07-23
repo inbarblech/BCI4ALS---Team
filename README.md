@@ -27,20 +27,20 @@ https://docs.google.com/document/d/1R05U__FPkcJwPW8BaAbBw7Ia1ys-FfBCWSafv4SjJFY/
 
 ## Repo structure
 
-├── Project folder<br>
-&emsp;&emsp;└── p300_light_on_off.py - the GUI for presenting P300 paradigm.<br>
-&emsp;&emsp;└── Offline_main.py - preprocessing offline recordings.<br>
-&emsp;&emsp;└── EEGNET_classifier.py - offline model training.<br>
-&emsp;&emsp;└── Online_main.py - online full pipeline - from streaming to prediction.<br>
-&emsp;&emsp;└── Old code - including different models implementations.<br>
+├──Project folder<br>
+&emsp;&emsp;└──p300_light_on_off.py - the GUI for presenting P300 paradigm.<br>
+&emsp;&emsp;└──Offline_main.py - preprocessing offline recordings.<br>
+&emsp;&emsp;└──EEGNET_classifier.py - offline model training.<br>
+&emsp;&emsp;└──Online_main.py - online full pipeline - from streaming to prediction.<br>
+&emsp;&emsp;└──Old code - including different models implementations.<br>
 &emsp;&emsp;&emsp;&emsp;└── features - for different models<br>
-├── Data folder<br>
-&emsp;&emsp;└── Recordings<br>
-&emsp;&emsp;└── plots<br>
-&emsp;&emsp;└── Segmented_data<br>
-&emsp;&emsp;&emsp;&emsp;└── for_EEGNET<br>
-&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;└── {event name}<br>
-&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;└── {file name}.npy<br>
+├──BCI_data - main data folder<br>
+&emsp;&emsp;└──Recordings<br>
+&emsp;&emsp;└──plots<br>
+&emsp;&emsp;└──Segmented_data<br>
+&emsp;&emsp;&emsp;&emsp;└──for_EEGNET<br>
+&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;└──{event name}<br>
+&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;└──{file name}.npy<br>
 
 * All necessary sub-folders will be created automatically, but it is best to ensure that your relevant recordings are saved in ../BCI_data/Recordings before running any preprocessing script.
 
@@ -64,5 +64,5 @@ In addition, you need to install openBCI-GUI and LabRecorder (LSL).
 ## Contacts
 * Shira Salama - shirasalama@mail.tau.ac.il
 * Rinat Saban - rinatsaban@mail.tau.ac.il
-* Taly Markovits - 
-* Inbar Blech - 
+* Taly Markovits - talym@mail.tau.ac.il 
+* Inbar Blech - inbarblech@mail.tau.ac.il

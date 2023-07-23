@@ -161,7 +161,7 @@ if __name__ == '__main__':
         predict = EEGNET_predict_target(on_x, off_x)
         print("==========================================\n"
               f"      Detect {predict} as target\n"
-              f"         light is {predict}!"
+              f"             {predict}!\n"
               "==========================================")
 
         read_from_lsl_process.terminate()
