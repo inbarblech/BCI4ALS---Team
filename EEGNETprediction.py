@@ -18,7 +18,7 @@ EEGnet_Path = os.path.join(Segmented_Data_Path, "for_EEGNET")
 
 def EEGNET_predict_target(on_x,off_x):
     net = EEGNet(len(chosen_channels))
-    net.load_state_dict(torch.load("C:\\Users\\marko\\bci\\exercises\\BCI4ALS---Team\\best_metric_model_debi.pth"))
+    net.load_state_dict(torch.load(os.join(EEGnet_Path, "best_metric_model_debi.pth")))
     
     with torch.no_grad():
         input1 = Variable(torch.from_numpy(on_x))
