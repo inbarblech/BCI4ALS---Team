@@ -2,9 +2,8 @@
 **An EEG data classification based on P300 paradigm, built with python.**
 
 <p align="center">
-<img alt="img.png" height="150" src="img.png" width="150"/>
+<img alt="img.png" height="150" src="./img/img.png" width="150"/>
 </p>
-
 
 ## Table of contents
 * [General info](#General-info)
@@ -20,11 +19,30 @@ The repository contains both online and offline pipelines that aims to predict t
 The end goal of this project is to allow the subject to control smart-Home devises using BCI.
 
 <p align="center">
-<img alt="img_3.png" height="150" src="img_3.png"/>
-<img alt="img_2.png" height="150" src="img_2.png"/>
+<img alt="img_3.png" height="150" src="./img/img_3.png"/>
+<img alt="img_2.png" height="150" src="./img/img_2.png"/>
 </p>
+For a detailed explanation of the project, the various functions documentation and applications, please see:
+https://docs.google.com/document/d/1R05U__FPkcJwPW8BaAbBw7Ia1ys-FfBCWSafv4SjJFY/edit?usp=sharing
 
 ## Repo structure
+
+├── Project folder<br>
+&emsp;&emsp;└── p300_light_on_off.py - the GUI for presenting P300 paradigm.<br>
+&emsp;&emsp;└── Offline_main.py - preprocessing offline recordings.<br>
+&emsp;&emsp;└── EEGNET_classifier.py - offline model training.<br>
+&emsp;&emsp;└── Online_main.py - online full pipeline - from streaming to prediction.<br>
+&emsp;&emsp;└── Old code - including different models implementations.<br>
+&emsp;&emsp;&emsp;&emsp;└── features - for different models<br>
+├── Data folder<br>
+&emsp;&emsp;└── Recordings<br>
+&emsp;&emsp;└── plots<br>
+&emsp;&emsp;└── Segmented_data<br>
+&emsp;&emsp;&emsp;&emsp;└── for_EEGNET<br>
+&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;└── {event name}<br>
+&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;└── {file name}.npy<br>
+
+* All necessary sub-folders will be created automatically, but it is best to ensure that your relevant recordings are saved in ../BCI_data/Recordings before running any preprocessing script.
 
 ## Setups
 To run this project, first clone the repository:  
@@ -32,11 +50,16 @@ To run this project, first clone the repository:
 Then install the requirements:   
 `cd BCI4ALS---Team`  
 `pip install -r requirements.txt`    
-In addition, you need to install openBCI-GUI and LabRecorder (lsl).
+In addition, you need to install openBCI-GUI and LabRecorder (LSL).
 
 ## Notes
-* Current model (EEGNET) results - 
-* All the data we used was collected using openBCI based EEG headset with 16 channels.
+* All the data we used was collected using openBCI based EEG headset with 13 channels.
+* Current model (EEGNET) results:
+  * All correct predictions: 43, Total test: 90, Total accuracy: 48% ​
+  * Target correct predictions: 15, Targets in test: 28, Target accuracy: 54% ​
+  * Other correct predictions: 4, Other in test: 31, Other accuracy: 13% ​
+  * Gap filler correct predictions: 24, Gap filler in test: 31, Gap filler accuracy: 77% 
+
 
 ## Contacts
 * Shira Salama - shirasalama@mail.tau.ac.il
