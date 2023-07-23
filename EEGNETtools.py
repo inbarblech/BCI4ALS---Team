@@ -17,13 +17,15 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 from sklearn.metrics import roc_auc_score, precision_score, recall_score, accuracy_score
 import matplotlib.pyplot as plt
-
-channels_names = ['C3','C4','Cz','FC1','FC2','FC5','FC6','CP1','CP2','CP5','CP6']
-#channels_names = ['0','1','2','3','4','5','6','7','8','9','10']
+import os
+channels_names = ['C3', 'C4', 'Cz', 'FC1', 'FC2', 'FC5', 'FC6', 'CP1', 'CP2', 'CP5', 'CP6']
 chosen_channels = channels_names
-target_path = "C:\\Users\\marko\\bci\\exercises\\BCI4ALS---Team\\segmented_data\\target"
-other_path = "C:\\Users\\marko\\bci\\exercises\\BCI4ALS---Team\\segmented_data\\other"
-gf_path = "C:\\Users\\marko\\bci\\exercises\\BCI4ALS---Team\\segmented_data\\gap filler"
+Data_Path = os.path.join(os.path.join(os.getcwd(), os.pardir), "BCI_data")
+Segmented_Data_Path = os.path.join(Data_Path, "segmented_data")
+EEGnet_Path = os.path.join(Segmented_Data_Path, "for_EEGNET")
+target_path=os.path.join(EEGnet_Path, 'target')
+other_path=os.path.join(EEGnet_Path, 'other')
+gf_path=os.path.join(EEGnet_Path, 'gap filler')
 AVERAGE_INPUT=1
 
 def evaluate(model, X, Y, params = ["acc"]):

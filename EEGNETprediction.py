@@ -7,10 +7,19 @@ Created on Mon Mar  6 15:21:12 2023
 import numpy as np
 import torch
 import sklearn
+import os
 from EEGNETtools import EEGNet
 from EEGNETtools import chosen_channels
 from EEGNETtools import read_input_x
 from torch.autograd import Variable
+
+Data_Path = os.path.join(os.path.join(os.getcwd(), os.pardir), "BCI_data")
+Segmented_Data_Path = os.path.join(Data_Path, "segmented_data")
+EEGnet_Path = os.path.join(Segmented_Data_Path, "for_EEGNET")
+
+def EEGNET_predict_target(on_x,off_x):
+    print('foo')
+
 
 def EEGNET_get_epoch_type(target_x, other_x, gf_x, tr):
     print(target_x.shape, other_x.shape, gf_x.shape)
@@ -19,7 +28,7 @@ def EEGNET_get_epoch_type(target_x, other_x, gf_x, tr):
     print(X.shape, y.shape)
     
     net = EEGNet(len(chosen_channels))
-    net.load_state_dict(torch.load("C:\\Users\\marko\\bci\\exercises\\BCI4ALS---Team\\best_metric_model_yar.pth"))
+    net.load_state_dict(torch.load("best_metric_model.pth"))
 
     with torch.no_grad():
         inputs = Variable(torch.from_numpy(X))
@@ -45,9 +54,9 @@ def get_data(target_path, other_path, gf_path):
     #limit gap fillers to the number of targets/others
     gf_x = read_input_x(gf_path,chosen_channels ,max(target_x.shape[0], other_x.shape[0]))   
     return target_x, other_x, gf_x
-def EEGNET_get_epoch_type_from_filetarget_path(target_path = "C:\\Users\\marko\\bci\\exercises\\BCI4ALS---Team\\segmented_data\\target\\data",
-                                                  other_path = "C:\\Users\\marko\\bci\\exercises\\BCI4ALS---Team\\segmented_data\\other\\data",
-                                                  gf_path = "C:\\Users\\marko\\bci\\exercises\\BCI4ALS---Team\\segmented_data\\GF\\data", tr = 0.22246733):
+def EEGNET_get_epoch_type_from_filetarget_path(target_path=os.path.join(EEGnet_Path, 'target'),
+                                               other_path=os.path.join(EEGnet_Path, 'other'),
+                                               gf_path=os.path.join(EEGnet_Path, 'gap filler'), tr=0.22246733):
 
     target_x, other_x, gf_x = get_data(target_path, other_path, gf_path)
     pred_target_list = EEGNET_get_epoch_type(target_x, other_x, gf_x, tr)
@@ -57,10 +66,10 @@ def EEGNET_get_epoch_type_from_filetarget_path(target_path = "C:\\Users\\marko\\
 if __name__ == '__main__':
 
      #pred_target_list = EEGNET_get_epoch_type_from_filetarget_path()
-     target_x, other_x, gf_x = get_data(target_path = "C:\\Users\\marko\\bci\\exercises\\BCI4ALS---Team\\segmented_data\\target\\data", 
-                                        other_path = "C:\\Users\\marko\\bci\\exercises\\BCI4ALS---Team\\segmented_data\\other\\data", 
-                                        gf_path = "C:\\Users\\marko\\bci\\exercises\\BCI4ALS---Team\\segmented_data\\gap filler\\data")
-     pred_target_list = EEGNET_get_epoch_type(target_x, other_x, gf_x, tr= 0.3)
+     target_x, other_x, gf_x = get_data(target_path=os.path.join(EEGnet_Path, 'target'),
+                                        other_path=os.path.join(EEGnet_Path, 'other'),
+                                        gf_path=os.path.join(EEGnet_Path, 'gap filler'))
+     pred_target_list = EEGNET_get_epoch_type(target_x, other_x, gf_x, tr=0.3)
      print(type(target_x), target_x.shape)
      print(type(pred_target_list), len(pred_target_list))
  

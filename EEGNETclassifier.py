@@ -90,14 +90,13 @@ if __name__ == '__main__':
             if  acc_v[-1] > best_metric:
                 best_metric = acc_v[-1]
                 best_metric_epoch = epoch + 1
-                torch.save(net.state_dict(), os.path.join(
-                    "C:\\Users\\marko\\bci\\exercises\\BCI4ALS---Team", "best_metric_model_debi.pth"))
+                torch.save(net.state_dict(), os.path.join(os.getcwd(), "best_metric_model.pth"))
                 print("saved new best metric model", best_metric)
         EEG_class_visualize(epoch_loss_values, acc_tr, acc_v, acc_ts, auc_tr, auc_v, auc_ts)
 
     
     #Test
-    net.load_state_dict(torch.load("C:\\Users\\marko\\bci\\exercises\\BCI4ALS---Team\\best_metric_model_debi.pth"))
+    net.load_state_dict(torch.load("best_metric_model.pth"))
     with torch.no_grad():
         inputs = Variable(torch.from_numpy(X_test))
         predicted = net(inputs).numpy().astype(np.float32)

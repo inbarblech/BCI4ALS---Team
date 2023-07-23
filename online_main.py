@@ -2,9 +2,11 @@ import numpy as np
 from pylsl import StreamInlet, resolve_streams
 import mne
 from collections import defaultdict
-import p300_light_on_off as paradigm
 from multiprocessing import Process, Pipe
 
+import p300_light_on_off as paradigm
+from preprocessing import remove_bad_channels, filtering, epochs_segmentation_online, erp_segmentation, data4eegnet
+from EEGNETprediction import EEGNET_predict_target
 
 def read_from_lsl(multiprocessing_, conn1, conn3):
     if(multiprocessing_): conn1.recv()
@@ -33,8 +35,8 @@ def read_from_lsl(multiprocessing_, conn1, conn3):
         markers_time = list()
         cur_marker = ''
         while cur_marker != 'block end' and cur_marker != 'all done':
-            data0, timestamp0 = inlet0.pull_sample(timeout = 0.004) #timout is mandatory for not loosing EEG data between markers 
-            data1, timestamp1 = inlet1.pull_sample(timeout = 0.004)
+            data0, timestamp0 = inlet0.pull_sample(timeout=0.004) #timout is mandatory for not loosing EEG data between markers
+            data1, timestamp1 = inlet1.pull_sample(timeout=0.004)
             if(data0!=None and data1!=None): print(f'time:{timestamp0} \n data0={data0}\n time:{timestamp1} \n data1={data1}\n')
             
             if(data0!=None and data1!=None):
@@ -138,7 +140,7 @@ if __name__ == '__main__':
         width,height = paradigm.get_screen_param()
         training_set, targets = paradigm.create_online_set()
         
-        read_from_lsl_process = Process(target=read_from_lsl, args=(True,conn1,conn3,))
+        read_from_lsl_process = Process(target=read_from_lsl, args=(True, conn1, conn3))
         read_from_lsl_process.start()
         
         outlet = paradigm.set_outlet()
@@ -149,7 +151,18 @@ if __name__ == '__main__':
         conn2.send("stop reading streams")
         raw_stream = conn2.recv()
         raw_stream.plot(scalings=dict(eeg=100e-6))
-    
-        
+        # preprocessing
+        raw_filtered = filtering(raw_stream, lfreq=0.5, hfreq=40, notch_dist=10, notch_qf=25, ica_exclude=[0, 1])
+        raw_clean = remove_bad_channels(raw_filtered, interpolate=True)
+        epochs_data = epochs_segmentation_online(raw_clean)
+        # Feature extraction
+        gf_x, off_x, on_x = data4eegnet(epochs_data)
+        # Predict
+        predict = EEGNET_predict_target(on_x, off_x)
+        print("==========================================\n"
+              f"      Detect {predict} as target\n"
+              f"         light is {predict}!"
+              "==========================================")
+
         read_from_lsl_process.terminate()
         read_from_lsl_process.join()
