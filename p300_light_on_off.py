@@ -21,7 +21,7 @@ BLANCK = 0
 TARGET_Y = 1
 TARGET_N = 2
 GAP_FILLER = 3
-1
+
 LIGHT_ON = 0
 LIGHT_OFF = 1
 white = (255, 255, 255)

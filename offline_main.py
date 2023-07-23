@@ -1,11 +1,9 @@
 import os
-from features.feature_extraction import extract_p300_features
 from preprocessing import xdf2mne, remove_bad_channels, filtering, epochs_segmentation, erp_segmentation, data4eegnet
 
 Plot_flag = True
 Save_flag_csv = False
 Save_flag_np = True
-Calc_Features = False
 
 L_freq = 0.5
 H_freq = 40
@@ -32,12 +30,6 @@ if __name__ == '__main__':
 
         gf_x, other_x, target_x = data4eegnet(epochs_data, f_name, to_save=Save_flag_np)
         gf_erp, other_erp, target_erp = erp_segmentation(epochs_data, plot=True, save2csv=Save_flag_csv, fname=f_name)
-
-
-        if Calc_Features: # Extract features from erp preprocessed data
-            filler_features = extract_p300_features(gf_erp)
-            target_features = extract_p300_features(target_erp)
-            non_target_features = extract_p300_features(other_erp)
 
         move_to = os.path.join(rec_path, "processed")
         if not os.path.isdir(rec_path):

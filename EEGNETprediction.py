@@ -7,29 +7,36 @@ Created on Mon Mar  6 15:21:12 2023
 import numpy as np
 import torch
 import sklearn
+import os
 from EEGNETtools import EEGNet
 from EEGNETtools import chosen_channels
 from EEGNETtools import read_input_x
 from torch.autograd import Variable
+Data_Path = os.path.join(os.path.join(os.getcwd(), os.pardir), "BCI_data")
+Segmented_Data_Path = os.path.join(Data_Path, "segmented_data")
+EEGnet_Path = os.path.join(Segmented_Data_Path, "for_EEGNET")
 
-def EEGNET_predict_target(epochs):
+def EEGNET_predict_target(on_x,off_x):
     net = EEGNet(len(chosen_channels))
     net.load_state_dict(torch.load("C:\\Users\\marko\\bci\\exercises\\BCI4ALS---Team\\best_metric_model_yar.pth"))
     
     with torch.no_grad():
-        inputs = Variable(torch.from_numpy(epochs))
-        predicted = net(inputs)
-        recongnized_light_on = False
-    for i, pred in enumerate(predicted):
-        index = np.argmax(pred)  #If index is 0, then this is the target. the epochs are provided as 'light on' and then 'light off'
-        if i == 0 and index == 0: recongnized_light_on = True 
-        if i == 1:
-            if index == 0:
-                if recongnized_light_on: return 'Failed to recognize' #Both on and off were recognized as target
-                else:  return 'Light Off'
-            else:
-                if recongnized_light_on: return 'Light On'
-                else: return 'Failed to recognize' #None was recognized as target 
+        input1 = Variable(torch.from_numpy(on_x))
+        predicted1 = net(input1)
+        input2 = Variable(torch.from_numpy(off_x))
+        predicted2 = net(input2)
+        
+    index1 = np.argmax(predicted1)  #If index is 0, then this is the target. 
+    index2 = np.argmax(predicted2)  #If index is 0, then this is the target. 
+    if index1 == 0 and index2!=0: 
+        print('Light On')
+        return 'Light On' 
+    elif index1 != 0 and index2==0: 
+            print('Light Off')
+            return 'Light Off' 
+    else:
+         print('Failed to recognize') #None was recognized as target or both were recognized as target 
+         return 'Failed to recognize'
 
 
 def EEGNET_get_epoch_type(target_x, other_x, gf_x, tr):
@@ -39,7 +46,7 @@ def EEGNET_get_epoch_type(target_x, other_x, gf_x, tr):
     print(X.shape, y.shape)
     
     net = EEGNet(len(chosen_channels))
-    net.load_state_dict(torch.load("C:\\Users\\marko\\bci\\exercises\\BCI4ALS---Team\\best_metric_model_yar.pth"))
+    net.load_state_dict(torch.load("best_metric_model.pth"))
 
     with torch.no_grad():
         inputs = Variable(torch.from_numpy(X))
@@ -65,9 +72,9 @@ def get_data(target_path, other_path, gf_path):
     #limit gap fillers to the number of targets/others
     gf_x = read_input_x(gf_path,chosen_channels ,max(target_x.shape[0], other_x.shape[0]))   
     return target_x, other_x, gf_x
-def EEGNET_get_epoch_type_from_filetarget_path(target_path = "C:\\Users\\marko\\bci\\exercises\\BCI4ALS---Team\\segmented_data\\target\\data",
-                                                  other_path = "C:\\Users\\marko\\bci\\exercises\\BCI4ALS---Team\\segmented_data\\other\\data",
-                                                  gf_path = "C:\\Users\\marko\\bci\\exercises\\BCI4ALS---Team\\segmented_data\\GF\\data", tr = 0.22246733):
+def EEGNET_get_epoch_type_from_filetarget_path(target_path=os.path.join(EEGnet_Path, 'target'),
+                                               other_path=os.path.join(EEGnet_Path, 'other'),
+                                               gf_path=os.path.join(EEGnet_Path, 'gap filler'), tr=0.22246733):
 
     target_x, other_x, gf_x = get_data(target_path, other_path, gf_path)
     pred_target_list = EEGNET_get_epoch_type(target_x, other_x, gf_x, tr)
@@ -77,10 +84,10 @@ def EEGNET_get_epoch_type_from_filetarget_path(target_path = "C:\\Users\\marko\\
 if __name__ == '__main__':
 
      #pred_target_list = EEGNET_get_epoch_type_from_filetarget_path()
-     target_x, other_x, gf_x = get_data(target_path = "C:\\Users\\marko\\bci\\exercises\\BCI4ALS---Team\\segmented_data\\target\\data", 
-                                        other_path = "C:\\Users\\marko\\bci\\exercises\\BCI4ALS---Team\\segmented_data\\other\\data", 
-                                        gf_path = "C:\\Users\\marko\\bci\\exercises\\BCI4ALS---Team\\segmented_data\\gap filler\\data")
-     pred_target_list = EEGNET_get_epoch_type(target_x, other_x, gf_x, tr= 0.3)
+     target_x, other_x, gf_x = get_data(target_path=os.path.join(EEGnet_Path, 'target'),
+                                        other_path=os.path.join(EEGnet_Path, 'other'),
+                                        gf_path=os.path.join(EEGnet_Path, 'gap filler'))
+     pred_target_list = EEGNET_get_epoch_type(target_x, other_x, gf_x, tr=0.3)
      print(type(target_x), target_x.shape)
      print(type(pred_target_list), len(pred_target_list))
  

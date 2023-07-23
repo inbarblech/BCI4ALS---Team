@@ -68,7 +68,7 @@ def cut_edges(raw):
     raw.crop(tmin=t_min-0.5, tmax=t_max+0.5)
 
 
-def xdf2mne(fpath, fname, plot=False, plot_scale=1e-3):
+def xdf2mne(fpath, fname,plot=False, plot_scale=1e-3, remove_o=True):
     """
     :param: fname (string) = file name including path
     :return: raw = MNE raw array with annotations
@@ -101,11 +101,13 @@ def xdf2mne(fpath, fname, plot=False, plot_scale=1e-3):
     raw._filenames = [fname]
     if plot:
         plot_raw(raw, fname, plot_scale=plot_scale, save=True)
-
+    if remove_o:
+        raw.drop_channels(['O1','O2'])
+        print('Occipital channels where removed')
     return raw
 
 
-def remove_bad_channels(raw, interpolate=False, remove_o=True):
+def remove_bad_channels(raw, interpolate=True, remove_o=True):
     print('\nSearching for bad channels using Pyprep...')
     while raw.info['bads']:
         nd = NoisyChannels(raw, do_detrend=True)
@@ -224,6 +226,48 @@ def epochs_segmentation(raw, reject_criteria_p=0.80, flat_criteria_v=1e-6, t_min
 
     return epochs_clean
 
+def epochs_segmentation_online(raw, reject_criteria_p=0.80, flat_criteria_v=1e-6, t_min=-0.2, t_max=0.5,
+                        detrend=1, baseline=(-0.2, 0), auto_reject=True, plot=False, fname='', save2csv=False):
+    raw.plot(scalings=dict(eeg=5e-5))
+    original_bads = deepcopy(raw.info['bads'])
+    raw_drop = raw.copy().drop_channels(original_bads)
+    events_from_annot, event_dict = mne.events_from_annotations(raw)
+    excludes = [event_dict[i] for i in event_dict.keys() if i in ['all done', 'blank', 'block end']]
+    events_include = mne.pick_events(events_from_annot, exclude=excludes)
+    events_include_dict = {key: value for key, value in event_dict.items() if value not in excludes}
+
+    reject_criteria = dict(eeg=np.abs(raw_drop._data).max()*reject_criteria_p)  # 100 µV
+    flat_criteria = dict(eeg=flat_criteria_v)  # 1 µV
+
+    epochs = mne.Epochs(raw, events_include, tmin=t_min, tmax=t_max, event_id=events_include_dict, detrend=detrend,
+                        baseline=baseline, reject=reject_criteria, preload=True, flat=flat_criteria)
+
+    print(f"New Annotations descriptions: {epochs.event_id.keys()}")
+    if auto_reject:
+        print('\nStarting epochs AutoReject, might take a while...')
+        ar = AutoReject()
+        epochs_clean = ar.fit_transform(epochs)
+        reject = get_rejection_threshold(epochs)
+        print(f'\nReject epochs voltage:{reject}')
+    else:
+        epochs_clean = epochs
+    print("Manual option was selected, please mark bad epochs on the following plot")
+    epochs_clean.plot(scalings=dict(eeg=1e-4))
+    epochs_clean.drop_bad()
+    epochs_clean = epochs_clean.interpolate_bads(reset_bads=True)
+
+    for event_name in epochs_clean.event_id:
+        if save2csv:
+            save_epochs_data(epochs_clean, event_name, fname)
+        if plot:
+            plot_epochs_by_event(epochs_clean, event_name, fname, save=True)
+
+    if plot:
+        plot_epochs(epochs_clean, fname, save=True)
+
+    print(f'\n Dropped epochs:\n{epochs_clean.drop_log}')
+    print(epochs_clean)
+    return epochs_clean
 
 def erp_segmentation(epochs, plot=False, fname='', save2csv=False):
     ERPs = {}
@@ -268,7 +312,7 @@ def save_epochs_data(epochs, event_name, fname):
         df_i.to_csv(file_path, index=False, header=True)
 
 
-def data4eegnet(epochs_data, fname, to_save=False):
+def data4eegnet(epochs_data, fname='_recording', to_save=True):
     conds = list(epochs_data.event_id.keys())
     conds.sort()
     arrays = []
